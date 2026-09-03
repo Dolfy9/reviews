@@ -2,24 +2,182 @@
 
 This file is a semantic mirror of the source tree. Each entry describes what a file or directory is responsible for. Run `pnpm codemap` to regenerate the skeleton after structural changes.
 
-> Last updated: during Phase 1 scaffold.
+> Last updated: 2026-09-03T12:39:49.017Z
 
-## `apps/api/`
-
-NestJS backend. Entry point is `src/main.ts`.
-
-## `apps/web/`
-
-React + Vite frontend. Entry point is `src/main.tsx`.
-
-## `packages/shared/`
-
-Zod schemas and TypeScript types shared between API and web. Must not import framework-specific code.
-
-## `docker/`
-
-Docker Compose files, Nginx config, and Postgres init scripts.
-
-## `scripts/`
-
-Cross-platform helpers and the code-map generator.
+- `AGENTS.md`
+- **`apps/`**
+  - **`apps/api/`**
+    - `Dockerfile`
+    - `Dockerfile.dev`
+    - `eslint.config.mjs`
+    - `jest.config.js`
+    - `nest-cli.json`
+    - `package.json`
+    - **`apps/api/prisma/`**
+      - `seed.ts`
+      - `schema.prisma`
+    - **`apps/api/src/`**
+      - `app.module.ts`
+      - **`apps/api/src/common/`**
+        - `date.util.ts`
+        - `duration.util.spec.ts`
+        - `duration.util.ts`
+        - `hash.util.spec.ts`
+        - `hash.util.ts`
+        - `mappers.ts`
+        - `pagination.ts`
+        - `types.ts`
+      - **`apps/api/src/config/`**
+        - `env.schema.ts`
+        - `minio.module.ts`
+        - `minio.service.ts`
+        - `prisma.module.ts`
+        - `prisma.service.ts`
+        - `redis.module.ts`
+      - `main.ts`
+      - **`apps/api/src/modules/`**
+        - **`apps/api/src/modules/admin/`**
+          - `admin.controller.ts`
+          - `admin.module.ts`
+          - `admin.service.ts`
+          - **`apps/api/src/modules/admin/dto/`**
+            - `index.ts`
+        - **`apps/api/src/modules/auth/`**
+          - `auth.controller.ts`
+          - `auth.module.ts`
+          - `auth.service.ts`
+          - **`apps/api/src/modules/auth/decorators/`**
+            - `current-user.decorator.ts`
+            - `roles.decorator.ts`
+          - **`apps/api/src/modules/auth/dto/`**
+            - `index.ts`
+            - `login.dto.ts`
+            - `refresh-token.dto.ts`
+            - `register.dto.ts`
+          - **`apps/api/src/modules/auth/guards/`**
+            - `jwt-auth.guard.ts`
+            - `roles.guard.ts`
+          - **`apps/api/src/modules/auth/strategies/`**
+            - `jwt.strategy.ts`
+        - **`apps/api/src/modules/health/`**
+          - `health.controller.ts`
+          - `health.module.ts`
+        - **`apps/api/src/modules/products/`**
+          - **`apps/api/src/modules/products/dto/`**
+            - `index.ts`
+          - `products.controller.ts`
+          - `products.module.ts`
+          - `products.repository.ts`
+          - `products.service.ts`
+        - **`apps/api/src/modules/reviews/`**
+          - **`apps/api/src/modules/reviews/dto/`**
+            - `index.ts`
+          - `reviews.controller.ts`
+          - `reviews.module.ts`
+          - `reviews.repository.ts`
+          - `reviews.service.ts`
+        - **`apps/api/src/modules/search/`**
+          - `embedding.service.ts`
+          - `search.controller.ts`
+          - `search.module.ts`
+          - `search.service.ts`
+        - **`apps/api/src/modules/uploads/`**
+          - `uploads.controller.ts`
+          - `uploads.module.ts`
+          - `uploads.service.ts`
+        - **`apps/api/src/modules/users/`**
+          - `users.controller.ts`
+          - `users.module.ts`
+          - `users.repository.ts`
+          - `users.service.ts`
+    - **`apps/api/test/`**
+      - `jest-e2e.json`
+    - `tsconfig.build.json`
+    - `tsconfig.json`
+    - `tsconfig.tsbuildinfo`
+  - **`apps/web/`**
+    - `Dockerfile`
+    - `Dockerfile.dev`
+    - `eslint.config.mjs`
+    - `index.html`
+    - `nginx.conf`
+    - `package.json`
+    - `postcss.config.js`
+    - **`apps/web/src/`**
+      - **`apps/web/src/api/`**
+        - `admin.ts`
+        - `auth.ts`
+        - `client.ts`
+        - `index.ts`
+        - `products.ts`
+        - `reviews.ts`
+        - `search.ts`
+      - `App.tsx`
+      - **`apps/web/src/components/`**
+        - `Layout.tsx`
+        - `ProductCard.tsx`
+        - `ReviewCard.tsx`
+        - `SearchBar.tsx`
+      - **`apps/web/src/hooks/`**
+        - `useAuth.ts`
+      - `index.css`
+      - **`apps/web/src/lib/`**
+        - `utils.spec.ts`
+        - `utils.ts`
+      - `main.tsx`
+      - **`apps/web/src/pages/`**
+        - `Admin.tsx`
+        - `Home.tsx`
+        - `Login.tsx`
+        - `Product.tsx`
+        - `Register.tsx`
+      - **`apps/web/src/store/`**
+        - `authStore.ts`
+      - `vite-env.d.ts`
+    - `tailwind.config.js`
+    - `tsconfig.json`
+    - `vite.config.ts`
+- **`docker/`**
+  - `docker-compose.dev.yml`
+  - `docker-compose.prod.yml`
+  - **`docker/nginx/`**
+  - **`docker/postgres-init/`**
+    - `01-extensions.sql`
+- **`docs/`**
+  - `API.md`
+  - `ARCHITECTURE.md`
+  - **`docs/backend/`**
+    - `modules.md`
+  - `CODEMAP.md`
+  - **`docs/frontend/`**
+    - `routing-state.md`
+  - `SETUP.md`
+- `package.json`
+- **`packages/`**
+  - **`packages/shared/`**
+    - `package.json`
+    - **`packages/shared/src/`**
+      - **`packages/shared/src/constants/`**
+        - `index.ts`
+      - `index.ts`
+      - **`packages/shared/src/schemas/`**
+        - `auth.schema.ts`
+        - `index.ts`
+        - `pagination.schema.ts`
+        - `product.schema.ts`
+        - `review.schema.ts`
+        - `search.schema.ts`
+        - `upload.schema.ts`
+        - `user.schema.ts`
+      - **`packages/shared/src/types/`**
+        - `index.ts`
+    - `tsconfig.json`
+- `pnpm-workspace.yaml`
+- `README.md`
+- **`scripts/`**
+  - `dev.ps1`
+  - `dev.sh`
+  - `prod.ps1`
+  - `prod.sh`
+  - `update-codemap.ts`
+- `turbo.json`

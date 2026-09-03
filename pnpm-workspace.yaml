@@ -5,12 +5,13 @@ minimumReleaseAge: 0
 verifyDepsBeforeRun: false
 strictDepBuilds: false
 allowBuilds:
-  '@nestjs/core': set this to true or false
-  '@prisma/client': set this to true or false
-  '@prisma/engines': set this to true or false
-  '@scarf/scarf': set this to true or false
-  bcrypt: set this to true or false
-  esbuild: set this to true or false
-  msw: set this to true or false
-  onnxruntime-node: set this to true or false
-  prisma: set this to true or false
+  bcrypt: true
+  prisma: true
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  onnxruntime-node: true
+  '@nestjs/core': false
+  msw: false
+  '@scarf/scarf': false
+

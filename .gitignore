@@ -1,0 +1,51 @@
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.test.example
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.out
+coverage
+*.tsbuildinfo
+.vite
+.nest
+.next
+
+# Logs
+*.log
+logs
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Testing
+test-results/
+playwright-report/
+coverage/
+
+# Docker data
+pgdata/
+redisdata/
+minio_data/
+fastembed_cache/
+
+# Misc
+tmp
+temp
+.cache

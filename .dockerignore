@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.out
+coverage
+.git
+.env
+.env.*
+*.log
+.pnpm-store
+*.md
+!README.md
+docs
+.pgdata
+redisdata
+minio_data
+fastembed_cache

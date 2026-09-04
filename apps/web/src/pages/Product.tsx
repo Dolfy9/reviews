@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,18 +6,29 @@ import { createReviewSchema, CreateReviewInput } from "@product-reviews/shared";
 import { productsApi } from "../api/products";
 import { reviewsApi } from "../api/reviews";
 import { ReviewCard } from "../components/ReviewCard";
+import { ProductCard } from "../components/ProductCard";
 import { StarRating } from "../components/StarRating";
 import { DetailSkeleton, ReviewSkeleton } from "../components/Skeletons";
 import { EmptyState } from "../components/EmptyState";
 import { useToast } from "../hooks/useToast";
 import { useAuthStore } from "../store/authStore";
-import { AlertCircle, CheckCircle2, Tag, Loader2, PenSquare } from "lucide-react";
+import { friendlyErrorMessage } from "../api/client";
+import { AlertCircle, CheckCircle2, Tag, Loader2, PenSquare, ArrowLeft, Waves, ImageOff, Sparkles, LogIn, X, ZoomIn, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { useState, useCallback } from "react";
 
 export default function Product() {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [mainImageError, setMainImageError] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const openLightbox = useCallback(() => setLightboxOpen(true), []);
+  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+  const prevImage = useCallback(() => setSelectedImage((p) => p - 1), []);
+  const nextImage = useCallback(() => setSelectedImage((p) => p + 1), []);
 
   const productQuery = useQuery({
     queryKey: ["product", id],
@@ -28,6 +39,12 @@ export default function Product() {
   const reviewsQuery = useQuery({
     queryKey: ["reviews", id],
     queryFn: () => reviewsApi.list(id ?? "", { page: 1, limit: 20 }),
+    enabled: Boolean(id),
+  });
+
+  const similarQuery = useQuery({
+    queryKey: ["similar", id],
+    queryFn: () => productsApi.similar(id ?? "", 4),
     enabled: Boolean(id),
   });
 
@@ -49,8 +66,8 @@ export default function Product() {
       reset();
       toast("Review submitted!", "success");
     },
-    onError: () => {
-      toast("Failed to submit review", "error");
+    onError: (err) => {
+      toast(friendlyErrorMessage(err), "error");
     },
   });
 
@@ -61,7 +78,7 @@ export default function Product() {
   if (productQuery.isLoading) return <DetailSkeleton />;
   if (productQuery.isError)
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+      <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
         <AlertCircle size={18} />
         Failed to load product.
       </div>
@@ -69,55 +86,185 @@ export default function Product() {
   if (!productQuery.data) return <EmptyState icon="package" title="Product not found" />;
 
   const product = productQuery.data;
+  const hasImages = product.images.length > 0;
+  const metadataEntries = product.metadata
+    ? Object.entries(product.metadata).filter(([, v]) => {
+        if (v === null || v === undefined) return false;
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === "object") return false;
+        return String(v).trim().length > 0;
+      })
+    : [];
 
   return (
-    <div className="space-y-6">
-      <div className="card animate-slide-up p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{product.name}</h1>
-            <p className="mt-2 text-gray-700 dark:text-gray-300">
+    <div className="space-y-8">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
+      >
+        <ArrowLeft size={16} />
+        Back to products
+      </Link>
+
+      {/* Product hero */}
+      <div className="card animate-slide-up relative overflow-hidden p-8">
+        <div className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-sky-500/8 blur-3xl" />
+        <div className="relative flex flex-col gap-8 sm:flex-row">
+          {/* Image gallery - e-shop style */}
+          {hasImages && !mainImageError ? (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={openLightbox}
+                className="group/gallery relative h-80 w-80 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50"
+              >
+                <img
+                  src={product.images[selectedImage]}
+                  alt={product.name}
+                  onError={() => setMainImageError(true)}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover/gallery:scale-105"
+                />
+                <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs text-white opacity-0 transition group-hover/gallery:opacity-100">
+                  <ZoomIn size={14} />
+                  View full
+                </div>
+              </button>
+              {product.images.length > 1 && (
+                <div className="flex flex-wrap gap-2 max-w-80">
+                  {product.images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(idx)}
+                      className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition ${
+                        selectedImage === idx
+                          ? "border-sky-500"
+                          : "border-slate-200 hover:border-sky-300 dark:border-slate-700"
+                      }`}
+                    >
+                      <img src={img} alt={`${product.name} ${idx + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex h-80 w-80 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+              <ImageOff className="text-slate-300 dark:text-slate-600" size={48} />
+            </div>
+          )}
+
+          {/* Info */}
+          <div className="flex flex-1 flex-col">
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
+              {product.category && (
+                <span className="badge-brand shrink-0">
+                  <Tag size={10} />
+                  {product.category}
+                </span>
+              )}
+            </div>
+            <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-300">
               {product.description}
             </p>
+
+            {/* Dynamic metadata parameters */}
+            {metadataEntries.length > 0 && (
+              <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  <Info size={14} />
+                  Product Details
+                </div>
+                <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                  {metadataEntries.map(([key, value]) => (
+                    <div key={key} className="flex justify-between gap-2 text-sm">
+                      <dt className="font-medium capitalize text-slate-500 dark:text-slate-400">
+                        {key.replace(/([A-Z])/g, " $1").trim()}
+                      </dt>
+                      <dd className="truncate text-slate-700 dark:text-slate-300">
+                        {Array.isArray(value) ? value.join(", ") : String(value)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+
+            <div className="mt-auto flex items-center gap-8 border-t border-slate-100 pt-6 dark:border-slate-800/50">
+              <span className="text-3xl font-extrabold gradient-text">
+                ${product.price.toFixed(2)}
+              </span>
+              <StarRating
+                rating={product.averageRating}
+                size={20}
+                reviewCount={product.reviewCount}
+              />
+            </div>
           </div>
-          {product.category && (
-            <span className="badge bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              <Tag size={10} />
-              {product.category}
-            </span>
-          )}
-        </div>
-        <div className="mt-4 flex items-center gap-6">
-          <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-            ${product.price.toFixed(2)}
-          </span>
-          <StarRating
-            rating={product.averageRating}
-            size={20}
-            reviewCount={product.reviewCount}
-          />
         </div>
       </div>
 
-      {user && (
-        <div className="card animate-slide-up p-6">
-          <div className="flex items-center gap-2">
-            <PenSquare className="text-indigo-600 dark:text-indigo-400" size={20} />
-            <h2 className="text-lg font-semibold">Write a review</h2>
+      {/* Lightbox */}
+      {lightboxOpen && hasImages && !mainImageError && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={closeLightbox}
+        >
+          <button
+            onClick={closeLightbox}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          >
+            <X size={24} />
+          </button>
+          {selectedImage > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); prevImage(); }}
+              className="absolute left-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            >
+              <ChevronLeft size={28} />
+            </button>
+          )}
+          {selectedImage < product.images.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); nextImage(); }}
+              className="absolute right-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            >
+              <ChevronRight size={28} />
+            </button>
+          )}
+          <img
+            src={product.images[selectedImage]}
+            alt={product.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+          />
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-1.5 text-sm text-white">
+            {selectedImage + 1} / {product.images.length}
+          </div>
+        </div>
+      )}
+
+      {/* Review form or login prompt */}
+      {user ? (
+        <div className="card animate-slide-up p-8">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500">
+              <PenSquare className="text-white" size={18} />
+            </div>
+            <h2 className="text-lg font-bold tracking-tight">Share your experience</h2>
           </div>
           {createReview.isError && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
               <AlertCircle size={16} />
               Failed to submit review. You may have already reviewed this product.
             </div>
           )}
           {createReview.isSuccess && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400">
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
               <CheckCircle2 size={16} />
               Review submitted successfully.
             </div>
           )}
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
             <div>
               <input
                 {...register("title")}
@@ -141,7 +288,7 @@ export default function Product() {
             </div>
             <div className="flex items-end gap-4">
               <div className="w-32">
-                <label className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+                <label className="mb-1.5 block text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Rating
                 </label>
                 <input
@@ -168,17 +315,37 @@ export default function Product() {
             </div>
           </form>
         </div>
+      ) : (
+        <div className="card animate-slide-up flex flex-col items-center gap-4 p-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-[0_4px_14px_rgba(14,165,233,0.25)]">
+            <PenSquare className="text-white" size={24} />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Share your experience</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              You need to be logged in to write a review for this product.
+            </p>
+          </div>
+          <Link to="/login" className="btn-primary">
+            <LogIn size={18} />
+            Sign in to review
+          </Link>
+        </div>
       )}
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">
-          Reviews{" "}
-          <span className="text-sm font-normal text-gray-400">
-            ({product.reviewCount})
-          </span>
-        </h2>
+      {/* Reviews list */}
+      <div className="space-y-5">
+        <div className="flex items-center gap-2.5">
+          <Waves className="text-sky-500" size={20} />
+          <h2 className="text-lg font-bold tracking-tight">
+            Reviews{" "}
+            <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
+              ({product.reviewCount})
+            </span>
+          </h2>
+        </div>
         {reviewsQuery.isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <ReviewSkeleton />
             <ReviewSkeleton />
           </div>
@@ -194,6 +361,26 @@ export default function Product() {
           />
         )}
       </div>
+
+      {/* Similar products */}
+      {similarQuery.data && similarQuery.data.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="text-sky-500" size={20} />
+            <h2 className="text-lg font-bold tracking-tight">
+              Similar products{" "}
+              <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
+                in {product.category}
+              </span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {similarQuery.data.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,10 +6,12 @@ export const productSchema = z.object({
   description: z.string(),
   price: z.number(),
   category: z.string(),
+  subcategory: z.string().nullable().optional(),
   images: z.array(z.string()),
   averageRating: z.number(),
   reviewCount: z.number().int(),
   isActive: z.boolean(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -29,6 +31,8 @@ export const productListQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   category: z.string().optional(),
+  categories: z.union([z.string(), z.array(z.string())]).optional(),
+  subcategory: z.string().optional(),
   minRating: z.coerce.number().min(0).max(5).optional(),
   search: z.string().optional(),
   sort: z

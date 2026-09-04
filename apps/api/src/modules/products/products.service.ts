@@ -18,12 +18,21 @@ export class ProductsService {
   ) {}
 
   async findAll(query: ProductListQuery) {
-    const { page, limit, category, minRating, search, sort } = query;
+    const { page, limit, category, categories, subcategory, minRating, search, sort } = query;
     const skip = (page - 1) * limit;
+
+    const categoryList = categories
+      ? Array.isArray(categories)
+        ? categories
+        : [categories]
+      : category
+        ? [category]
+        : undefined;
 
     const filters: Prisma.ProductWhereInput = {
       isActive: true,
-      ...(category && { category }),
+      ...(categoryList && categoryList.length > 0 && { category: { in: categoryList } }),
+      ...(subcategory && { subcategory }),
       ...(minRating !== undefined && { averageRating: { gte: minRating } }),
       ...(search && {
         OR: [
@@ -100,6 +109,36 @@ export class ProductsService {
   async delete(id: string) {
     await this.findById(id);
     await this.productsRepository.delete(id);
+  }
+
+  async getCategories(): Promise<string[]> {
+    const rows = await this.productsRepository.findDistinctCategories();
+    return rows.map((r) => r.category);
+  }
+
+  async getSubcategories(category: string): Promise<string[]> {
+    const rows = await this.productsRepository.findDistinctSubcategories(category);
+    return rows
+      .map((r) => r.subcategory)
+      .filter((s): s is string => s !== null);
+  }
+
+  async findSimilar(id: string, limit = 6) {
+    const product = await this.productsRepository.findById(id);
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+    const products = await this.productsRepository.findMany(
+      0,
+      limit,
+      {
+        isActive: true,
+        category: product.category,
+        id: { not: id },
+      },
+      [{ averageRating: "desc" }, { reviewCount: "desc" }],
+    );
+    return products.map(toProductDto);
   }
 
   private buildSortOrder(

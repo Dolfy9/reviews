@@ -28,10 +28,12 @@ model Product {
   description    String                @db.Text
   price          Decimal               @db.Decimal(10, 2)
   category       String
+  subcategory    String?
   images         String[]
   averageRating  Float                 @default(0)
   reviewCount    Int                   @default(0)
   isActive       Boolean               @default(true)
+  metadata       Json?
   embedding      Unsupported("vector(384)")?
   reviews        Review[]
   createdAt      DateTime              @default(now())

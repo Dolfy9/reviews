@@ -95,12 +95,12 @@ export class SearchService {
     limit: number,
   ): Promise<ProductDto[]> {
     const rows = (await this.prisma.$queryRaw`
-      SELECT "id", "name", "description", "price", "category", "images",
+      SELECT "id", "name", "description", "price", "category", "subcategory", "images", "metadata",
              "averageRating", "reviewCount", "isActive", "createdAt", "updatedAt",
-             ts_rank_cd(to_tsvector('english', "name" || ' ' || "description"), plainto_tsquery('english', ${q})) AS rank
+             ts_rank_cd(to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')), plainto_tsquery('english', ${q})) AS rank
       FROM "Product"
       WHERE "isActive" = true
-        AND to_tsvector('english', "name" || ' ' || "description") @@ plainto_tsquery('english', ${q})
+        AND to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ plainto_tsquery('english', ${q})
       ORDER BY rank DESC
       LIMIT ${limit} OFFSET ${skip}
     `) as Array<Record<string, unknown>>;
@@ -113,7 +113,7 @@ export class SearchService {
       SELECT COUNT(*)::int AS count
       FROM "Product"
       WHERE "isActive" = true
-        AND to_tsvector('english', "name" || ' ' || "description") @@ plainto_tsquery('english', ${q})
+        AND to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ plainto_tsquery('english', ${q})
     `) as Array<{ count: number }>;
     return result[0]?.count ?? 0;
   }
@@ -128,7 +128,7 @@ export class SearchService {
     const vectorString = `[${vector.join(",")}]`;
 
     const rows = (await this.prisma.$queryRaw`
-      SELECT "id", "name", "description", "price", "category", "images",
+      SELECT "id", "name", "description", "price", "category", "subcategory", "images", "metadata",
              "averageRating", "reviewCount", "isActive", "createdAt", "updatedAt",
              embedding <=> ${vectorString}::vector AS distance
       FROM "Product"
@@ -274,10 +274,12 @@ export class SearchService {
       description: String(row.description),
       price: Number(row.price),
       category: String(row.category),
+      subcategory: row.subcategory != null ? String(row.subcategory) : null,
       images: Array.isArray(row.images) ? (row.images as string[]) : [],
       averageRating: Number(row.averageRating),
       reviewCount: Number(row.reviewCount),
       isActive: Boolean(row.isActive),
+      metadata: row.metadata ?? null,
       createdAt: new Date(String(row.createdAt)),
       updatedAt: new Date(String(row.updatedAt)),
     } as unknown as import("@prisma/client").Product);

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Body,
@@ -18,6 +19,7 @@ import {
 } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
 import { AdminService } from "./admin.service";
+import { DataFeedService } from "./data-feed.service";
 import {
   UpdateReviewStatusDto,
   AdminReviewListQueryDto,
@@ -36,6 +38,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly reviewsService: ReviewsService,
+    private readonly dataFeedService: DataFeedService,
   ) {}
 
   @Get("reviews")
@@ -98,5 +101,21 @@ export class AdminController {
   @ApiResponse({ status: 403, description: "Admin role required." })
   updateRole(@Param("id") userId: string, @Body() dto: UpdateRoleDto) {
     return this.adminService.updateRole(userId, dto.role);
+  }
+
+  @Post("seed")
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Mine real products from web sources (admin only)" })
+  @ApiQuery({ name: "source", required: false, type: String, description: "Source: off, itunes_movies, itunes_podcasts, itunes_apps, openlibrary, or all (default all)" })
+  @ApiQuery({ name: "count", required: false, type: Number, description: "Products per source (default 100, max 100)" })
+  @ApiResponse({ status: 201, description: "Products mined successfully." })
+  @ApiResponse({ status: 403, description: "Admin role required." })
+  async seedProducts(
+    @Query("source") source?: string,
+    @Query("count") count?: string,
+  ) {
+    const src = (source ?? "all") as "off" | "itunes_movies" | "itunes_podcasts" | "itunes_apps" | "openlibrary" | "all";
+    const n = count ? Math.min(parseInt(count, 10) || 100, 100) : 100;
+    return this.dataFeedService.seed(src, n);
   }
 }

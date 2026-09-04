@@ -19,10 +19,12 @@ export function toProductDto(product: Product): ProductDto {
     description: product.description,
     price: Number(product.price),
     category: product.category,
+    subcategory: product.subcategory,
     images: product.images,
     averageRating: product.averageRating,
     reviewCount: product.reviewCount,
     isActive: product.isActive,
+    metadata: product.metadata as Record<string, unknown> | null,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };

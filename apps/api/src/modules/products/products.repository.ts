@@ -10,7 +10,7 @@ export class ProductsRepository {
     skip: number,
     take: number,
     filters: Prisma.ProductWhereInput,
-    orderBy: Prisma.ProductOrderByWithRelationInput,
+    orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[],
   ) {
     return this.prisma.product.findMany({
       where: filters,
@@ -44,5 +44,23 @@ export class ProductsRepository {
     const vectorString = `[${vector.join(",")}]`;
     await this.prisma
       .$executeRaw`UPDATE "Product" SET embedding = ${vectorString}::vector WHERE id = ${id}`;
+  }
+
+  findDistinctCategories() {
+    return this.prisma.product.findMany({
+      where: { isActive: true },
+      select: { category: true },
+      distinct: ["category"],
+      orderBy: { category: "asc" },
+    });
+  }
+
+  findDistinctSubcategories(category: string) {
+    return this.prisma.product.findMany({
+      where: { isActive: true, category },
+      select: { subcategory: true },
+      distinct: ["subcategory"],
+      orderBy: { subcategory: "asc" },
+    });
   }
 }

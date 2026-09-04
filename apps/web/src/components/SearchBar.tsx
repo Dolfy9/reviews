@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { Search } from "lucide-react";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -14,17 +15,21 @@ export function SearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-2xl gap-2">
+    <form onSubmit={handleSubmit} className="relative flex w-full max-w-2xl">
+      <Search
+        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+        size={18}
+      />
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products and reviews..."
-        className="flex-1 rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="input !rounded-r-none !pl-11"
       />
       <button
         type="submit"
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+        className="btn-primary !rounded-l-none !px-6"
       >
         Search
       </button>

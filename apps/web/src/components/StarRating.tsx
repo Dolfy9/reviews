@@ -22,20 +22,20 @@ export function StarRating({
             size={size}
             className={
               star <= Math.round(rating)
-                ? "fill-amber-400 text-amber-400"
-                : "fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700"
+                ? "fill-sky-500 text-sky-500"
+                : "fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"
             }
           />
         ))}
       </div>
       {showValue && (
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
           {rating.toFixed(1)}
         </span>
       )}
       {reviewCount !== undefined && (
-        <span className="text-xs text-gray-400 dark:text-gray-500">
-          ({reviewCount})
+        <span className="text-xs text-slate-400 dark:text-slate-500">
+          ({reviewCount} reviews)
         </span>
       )}
     </div>

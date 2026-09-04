@@ -1,7 +1,27 @@
 import { api } from "./client";
-import { SearchQuery } from "@product-reviews/shared";
+import {
+  SearchQuery,
+  ProductDto,
+  ReviewDto,
+  PaginatedResponse,
+} from "@product-reviews/shared";
+
+export interface SearchAllResult {
+  products: PaginatedResponse<ProductDto>;
+  reviews: PaginatedResponse<ReviewDto>;
+}
 
 export const searchApi = {
-  search: (params: SearchQuery) =>
-    api.get("/search", { params }).then((res) => res.data),
+  searchProducts: (params: Omit<SearchQuery, "target">) =>
+    api
+      .get<PaginatedResponse<ProductDto>>("/search", {
+        params: { ...params, target: "products" },
+      })
+      .then((res) => res.data),
+  searchAll: (params: Omit<SearchQuery, "target">) =>
+    api
+      .get<SearchAllResult>("/search", {
+        params: { ...params, target: "all" },
+      })
+      .then((res) => res.data),
 };

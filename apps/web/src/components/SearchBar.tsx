@@ -25,11 +25,11 @@ export function SearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products and reviews..."
-        className="input !rounded-r-none !pl-11"
+        className="input !rounded-r-none !pl-11 !text-base"
       />
       <button
         type="submit"
-        className="btn-primary !rounded-l-none !px-6"
+        className="btn-primary !rounded-l-none !px-6 !text-base"
       >
         Search
       </button>

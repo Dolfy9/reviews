@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Moon, Sun, LogOut, Shield, User, Menu, X, Package } from "lucide-react";
+import { Moon, Sun, LogOut, Shield, User, Menu, X, Waves } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -17,54 +17,59 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [dark]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <nav className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-            <Package className="text-indigo-600" size={24} />
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0c1929] dark:text-slate-100">
+      {/* Ambient gradient orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-500/5" />
+        <div className="absolute top-1/2 -left-40 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-500/5" />
+      </div>
+
+      <nav className="sticky top-0 z-40 glass border-b border-sky-100/50 dark:border-sky-900/20">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-[0_4px_14px_rgba(14,165,233,0.35)]">
+              <Waves className="text-white" size={18} />
+            </div>
+            <span className="gradient-text text-xl font-extrabold tracking-tight">
               ReviewHub
             </span>
           </Link>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             <button
               onClick={() => setDark(!dark)}
-              className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              className="rounded-xl p-2.5 text-slate-500 transition-all duration-300 hover:bg-sky-50 hover:text-sky-600 dark:text-slate-400 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
               aria-label="Toggle dark mode"
             >
               {dark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             {user ? (
               <>
-                <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                <span className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400">
                   <User size={16} />
                   {user.name ?? user.email}
                 </span>
                 {user.role === "ADMIN" && (
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-sky-600 transition-all duration-300 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/30"
                   >
                     <Shield size={16} />
                     Admin
                   </Link>
                 )}
-                <button
-                  onClick={logout}
-                  className="btn-secondary !px-3 !py-1.5"
-                >
+                <button onClick={logout} className="btn-secondary !px-3.5 !py-2">
                   <LogOut size={16} />
                   Log out
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="btn-secondary !px-3 !py-1.5">
+                <Link to="/login" className="btn-ghost">
                   Log in
                 </Link>
-                <Link to="/register" className="btn-primary !px-3 !py-1.5">
-                  Register
+                <Link to="/register" className="btn-primary !py-2">
+                  Get started
                 </Link>
               </>
             )}
@@ -72,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg p-2 text-gray-500 md:hidden"
+            className="rounded-xl p-2.5 text-slate-500 transition hover:bg-sky-50 dark:hover:bg-sky-950/30 md:hidden"
             aria-label="Toggle menu"
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -80,36 +85,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {menuOpen && (
-          <div className="animate-fade-in border-t border-gray-200 px-4 py-3 md:hidden dark:border-gray-800">
+          <div className="animate-fade-in border-t border-sky-100/50 px-6 py-4 md:hidden dark:border-sky-900/20">
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setDark(!dark)}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400"
               >
                 {dark ? <Sun size={16} /> : <Moon size={16} />}
                 {dark ? "Light mode" : "Dark mode"}
               </button>
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="px-3 text-sm text-slate-600 dark:text-slate-400">
                     {user.name ?? user.email}
                   </span>
                   {user.role === "ADMIN" && (
                     <Link
                       to="/admin"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400"
+                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-sky-600 dark:text-sky-400"
                     >
                       <Shield size={16} />
                       Admin
                     </Link>
                   )}
                   <button
-                    onClick={() => {
-                      logout();
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                    onClick={() => { logout(); setMenuOpen(false); }}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400"
                   >
                     <LogOut size={16} />
                     Log out
@@ -120,16 +122,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     to="/login"
                     onClick={() => setMenuOpen(false)}
-                    className="text-sm text-indigo-600 dark:text-indigo-400"
+                    className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400"
                   >
                     Log in
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMenuOpen(false)}
-                    className="text-sm text-indigo-600 dark:text-indigo-400"
+                    className="btn-primary"
                   >
-                    Register
+                    Get started
                   </Link>
                 </>
               )}
@@ -138,11 +140,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="relative mx-auto max-w-7xl px-6 py-6">{children}</main>
 
-      <footer className="border-t border-gray-200 py-6 dark:border-gray-800">
-        <div className="mx-auto max-w-6xl px-4 text-center text-sm text-gray-400 dark:text-gray-600">
-          ReviewHub &middot; Product Reviews Platform
+      <footer className="relative border-t border-sky-100/50 py-8 dark:border-sky-900/20">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="flex items-center gap-2">
+              <Waves className="text-sky-500" size={16} />
+              <span className="text-sm font-semibold gradient-text">ReviewHub</span>
+            </div>
+            <p className="text-sm text-slate-400 dark:text-slate-600">
+              Discover. Review. Decide.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

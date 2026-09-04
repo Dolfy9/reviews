@@ -4,12 +4,12 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml .npmrc ./
 COPY pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @product-reviews/web --filter @product-reviews/shared install --frozen-lockfile
 
 COPY . .
 

@@ -17,11 +17,8 @@ export default defineConfig({
       "@": path.resolve(currentDir, "./src"),
       "@product-reviews/shared": path.resolve(
         currentDir,
-        "../packages/shared/src",
+        "../../packages/shared/src",
       ),
     },
-  },
-  optimizeDeps: {
-    include: ["@product-reviews/shared"],
   },
 });

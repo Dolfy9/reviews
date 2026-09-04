@@ -5,12 +5,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y python3 make g++ ca-certificates openssl && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml .npmrc ./
 COPY pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @product-reviews/api --filter @product-reviews/shared install --frozen-lockfile
 
 COPY . .
 

@@ -90,4 +90,25 @@ export class ReviewsRepository {
       data: { helpfulCount: helpful, notHelpfulCount: notHelpful },
     });
   }
+
+  findPending(where: Prisma.ReviewWhereInput, skip: number, take: number) {
+    return this.prisma.review.findMany({
+      where,
+      include: { user: { select: { name: true } }, product: true },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+    });
+  }
+
+  countPending(where: Prisma.ReviewWhereInput) {
+    return this.prisma.review.count({ where });
+  }
+
+  findByIdWithUser(id: string) {
+    return this.prisma.review.findUnique({
+      where: { id },
+      include: { user: { select: { name: true } } },
+    });
+  }
 }

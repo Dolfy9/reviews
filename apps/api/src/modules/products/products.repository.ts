@@ -45,20 +45,4 @@ export class ProductsRepository {
     await this.prisma
       .$executeRaw`UPDATE "Product" SET embedding = ${vectorString}::vector WHERE id = ${id}`;
   }
-
-  async recalculateRating(productId: string) {
-    const aggregation = await this.prisma.review.aggregate({
-      where: { productId, status: "APPROVED" },
-      _avg: { rating: true },
-      _count: { id: true },
-    });
-
-    const averageRating = aggregation._avg.rating ?? 0;
-    const reviewCount = aggregation._count.id;
-
-    return this.prisma.product.update({
-      where: { id: productId },
-      data: { averageRating, reviewCount },
-    });
-  }
 }

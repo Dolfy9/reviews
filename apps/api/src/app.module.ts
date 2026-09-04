@@ -14,7 +14,6 @@ import { SearchModule } from "./modules/search/search.module";
 import { UploadsModule } from "./modules/uploads/uploads.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { HealthModule } from "./modules/health/health.module";
-import { RolesGuard } from "./modules/auth/guards/roles.guard";
 
 @Module({
   imports: [
@@ -43,10 +42,6 @@ import { RolesGuard } from "./modules/auth/guards/roles.guard";
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
     },
   ],
 })

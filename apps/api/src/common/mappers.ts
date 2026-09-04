@@ -1,4 +1,4 @@
-import { User, Product, Review, Role } from "@prisma/client";
+import { User, Product, Review } from "@prisma/client";
 import { UserDto, ProductDto, ReviewDto } from "@product-reviews/shared";
 
 export function toUserDto(user: User): UserDto {
@@ -53,9 +53,3 @@ export function toReviewDto(
     updatedAt: review.updatedAt.toISOString(),
   };
 }
-
-export type JwtUser = {
-  userId: string;
-  email: string;
-  role: Role;
-};

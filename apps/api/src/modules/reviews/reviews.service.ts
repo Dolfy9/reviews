@@ -208,14 +208,8 @@ export class ReviewsService {
       : { status: { not: "APPROVED" as const } };
 
     const [reviews, total] = await Promise.all([
-      this.prisma.review.findMany({
-        where,
-        include: { user: { select: { name: true } }, product: true },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      this.prisma.review.count({ where }),
+      this.reviewsRepository.findPending(where, skip, limit),
+      this.reviewsRepository.countPending(where),
     ]);
 
     return buildPaginatedResponse(
@@ -227,10 +221,7 @@ export class ReviewsService {
   }
 
   async findById(reviewId: string): Promise<ReviewDto> {
-    const review = await this.prisma.review.findUnique({
-      where: { id: reviewId },
-      include: { user: { select: { name: true } } },
-    });
+    const review = await this.reviewsRepository.findByIdWithUser(reviewId);
     if (!review) {
       throw new NotFoundException("Review not found");
     }

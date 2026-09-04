@@ -22,13 +22,21 @@ Nginx (prod) / Vite dev server (dev)
 
 The API is organized as NestJS feature modules. Each feature contains:
 
-- `*.controller.ts` – route handlers and DTO typing.
+- `*.controller.ts` – route handlers and DTO typing, Swagger/OpenAPI decorators.
 - `*.service.ts` – business logic.
 - `*.repository.ts` – database access (Prisma).
-- `dto/` – local DTOs / Zod schema re-exports.
+- `dto/` – local DTOs / Zod schema re-exports via `createZodDto`.
 - `*.guard.ts` / `*.strategy.ts` – auth where needed.
 
 Shared validation rules live in `packages/shared/src/schemas` and are imported by both backend and frontend.
+
+Global middleware and guards (configured in `main.ts` and `app.module.ts`):
+- `helmet` for security headers.
+- `cookieParser` for JWT cookie extraction.
+- `ZodValidationPipe` as the global validation pipe.
+- `ThrottlerGuard` for rate limiting (100 req/60s per IP).
+- `RolesGuard` for role-based access control.
+- Swagger/OpenAPI at `/api/docs` with `patchNestJsSwagger` for Zod DTO support.
 
 ## Search
 

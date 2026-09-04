@@ -35,6 +35,14 @@ A full-stack product review system (Amazon/Alza style) built with TypeScript, Ne
    pnpm db:seed
    ```
 
+5. Seed credentials:
+
+   | Email | Password | Role |
+   | ----- | -------- | ---- |
+   | `admin@example.com` | `Password123!` | Admin |
+   | `alice@example.com` | `Password123!` | User |
+   | `bob@example.com` | `Password123!` | User |
+
 ## Production
 
 ```bash
@@ -50,14 +58,16 @@ pnpm docker:prod
 - [`docs/API.md`](./docs/API.md) – API conventions and endpoints
 - [`docs/SETUP.md`](./docs/SETUP.md) – detailed setup, troubleshooting, and environment variables
 - [`docs/CODEMAP.md`](./docs/CODEMAP.md) – semantic map of source files
+- [`docs/backend/modules.md`](./docs/backend/modules.md) – backend module conventions
+- [`docs/frontend/routing-state.md`](./docs/frontend/routing-state.md) – frontend routing and state management
 
 ## Stack
 
 | Layer      | Tech                                                                                    |
 | ---------- | --------------------------------------------------------------------------------------- |
-| Monorepo   | pnpm workspaces + Turborepo                                                             |
+| Monorepo   | pnpm workspaces                                                                         |
 | Backend    | NestJS 10, Prisma, PostgreSQL + pgvector, Redis, MinIO                                  |
-| Frontend   | React 18, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Zustand                        |
+| Frontend   | React 18, Vite, Tailwind CSS, TanStack Query, Zustand                                   |
 | Search     | PostgreSQL full-text search + optional pgvector semantic search (local ONNX embeddings) |
 | Validation | Zod (shared between frontend and backend)                                               |
 | Tests      | Jest, Vitest, Playwright                                                                |

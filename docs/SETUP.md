@@ -36,6 +36,14 @@
    corepack pnpm db:seed
    ```
 
+6. Seed credentials:
+
+   | Email | Password | Role |
+   | ----- | -------- | ---- |
+   | `admin@example.com` | `Password123!` | Admin |
+   | `alice@example.com` | `Password123!` | User |
+   | `bob@example.com` | `Password123!` | User |
+
 ## Services
 
 - Web: `http://localhost:3000`

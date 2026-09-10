@@ -37,11 +37,11 @@ A full-stack product review system (Amazon/Alza style) built with TypeScript, Ne
 
 5. Seed credentials:
 
-   | Email | Password | Role |
-   | ----- | -------- | ---- |
+   | Email               | Password       | Role  |
+   | ------------------- | -------------- | ----- |
    | `admin@example.com` | `Password123!` | Admin |
-   | `alice@example.com` | `Password123!` | User |
-   | `bob@example.com` | `Password123!` | User |
+   | `alice@example.com` | `Password123!` | User  |
+   | `bob@example.com`   | `Password123!` | User  |
 
 ## Production
 

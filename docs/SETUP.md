@@ -38,11 +38,11 @@
 
 6. Seed credentials:
 
-   | Email | Password | Role |
-   | ----- | -------- | ---- |
+   | Email               | Password       | Role  |
+   | ------------------- | -------------- | ----- |
    | `admin@example.com` | `Password123!` | Admin |
-   | `alice@example.com` | `Password123!` | User |
-   | `bob@example.com` | `Password123!` | User |
+   | `alice@example.com` | `Password123!` | User  |
+   | `bob@example.com`   | `Password123!` | User  |
 
 ## Services
 

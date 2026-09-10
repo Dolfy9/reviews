@@ -31,6 +31,7 @@ The API is organized as NestJS feature modules. Each feature contains:
 Shared validation rules live in `packages/shared/src/schemas` and are imported by both backend and frontend.
 
 Global middleware and guards (configured in `main.ts` and `app.module.ts`):
+
 - `helmet` for security headers.
 - `cookieParser` for JWT cookie extraction.
 - `ZodValidationPipe` as the global validation pipe.

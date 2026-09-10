@@ -2,7 +2,7 @@
 
 This file is a semantic mirror of the source tree. Each entry describes what a file or directory is responsible for. Run `pnpm codemap` to regenerate the skeleton after structural changes.
 
-> Last updated: 2026-09-04T08:39:43.981Z
+> Last updated: 2026-09-10T08:36:10.443Z
 
 - `AGENTS.md`
 - **`apps/`**
@@ -40,6 +40,7 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
           - `admin.controller.ts`
           - `admin.module.ts`
           - `admin.service.ts`
+          - `data-feed.service.ts`
           - **`apps/api/src/modules/admin/dto/`**
             - `index.ts`
         - **`apps/api/src/modules/auth/`**
@@ -56,6 +57,7 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
             - `register.dto.ts`
           - **`apps/api/src/modules/auth/guards/`**
             - `jwt-auth.guard.ts`
+            - `optional-jwt-auth.guard.ts`
             - `roles.guard.ts`
           - **`apps/api/src/modules/auth/strategies/`**
             - `jwt.strategy.ts`
@@ -113,14 +115,24 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
         - `products.ts`
         - `reviews.ts`
         - `search.ts`
+        - `uploads.ts`
       - `App.tsx`
       - **`apps/web/src/components/`**
+        - `AutocompleteSearch.tsx`
+        - `EmptyState.tsx`
         - `Layout.tsx`
         - `ProductCard.tsx`
+        - `ProsConsInput.tsx`
         - `ReviewCard.tsx`
+        - `ReviewImageGallery.tsx`
+        - `ReviewImageInput.tsx`
         - `SearchBar.tsx`
+        - `Skeletons.tsx`
+        - `StarRating.tsx`
+        - `Toast.tsx`
       - **`apps/web/src/hooks/`**
         - `useAuth.ts`
+        - `useToast.ts`
       - `index.css`
       - **`apps/web/src/lib/`**
         - `utils.spec.ts`

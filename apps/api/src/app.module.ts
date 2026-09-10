@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 import { APP_GUARD } from "@nestjs/core";
 import { validate } from "./config/env.schema";
 import { PrismaModule } from "./config/prisma.module";
@@ -18,6 +19,7 @@ import { HealthModule } from "./modules/health/health.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ validate, isGlobal: true }),
+    EventEmitterModule.forRoot({ global: true }),
     ThrottlerModule.forRoot([
       {
         name: "default",

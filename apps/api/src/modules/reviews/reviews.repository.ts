@@ -10,10 +10,18 @@ export class ReviewsRepository {
     return this.prisma.review.findUnique({ where: { id } });
   }
 
-  findByProduct(productId: string, skip: number, take: number) {
+  findByProduct(
+    productId: string,
+    skip: number,
+    take: number,
+    userId?: string,
+  ) {
     return this.prisma.review.findMany({
       where: { productId, status: "APPROVED" },
-      include: { user: { select: { name: true } } },
+      include: {
+        user: { select: { name: true } },
+        ...(userId ? { votes: { where: { userId } } } : {}),
+      },
       orderBy: { createdAt: "desc" },
       skip,
       take,
@@ -105,10 +113,13 @@ export class ReviewsRepository {
     return this.prisma.review.count({ where });
   }
 
-  findByIdWithUser(id: string) {
+  findByIdWithUser(id: string, userId?: string) {
     return this.prisma.review.findUnique({
       where: { id },
-      include: { user: { select: { name: true } } },
+      include: {
+        user: { select: { name: true } },
+        ...(userId ? { votes: { where: { userId } } } : {}),
+      },
     });
   }
 }

@@ -16,7 +16,10 @@ export class HealthController {
   @Get()
   @HealthCheck()
   @ApiOperation({ summary: "Health check endpoint" })
-  @ApiResponse({ status: 200, description: "Service health status including database connectivity." })
+  @ApiResponse({
+    status: 200,
+    description: "Service health status including database connectivity.",
+  })
   check() {
     return this.health.check([
       () => this.prisma.pingCheck("database", this.prismaService),

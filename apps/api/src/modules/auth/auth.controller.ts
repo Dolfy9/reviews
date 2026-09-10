@@ -7,7 +7,12 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from "@nestjs/swagger";
 import { Response, Request } from "express";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
@@ -22,8 +27,14 @@ export class AuthController {
 
   @Post("register")
   @ApiOperation({ summary: "Register a new user account" })
-  @ApiResponse({ status: 201, description: "User registered, auth cookies set." })
-  @ApiResponse({ status: 400, description: "Email already in use or invalid input." })
+  @ApiResponse({
+    status: 201,
+    description: "User registered, auth cookies set.",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Email already in use or invalid input.",
+  })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -33,7 +44,10 @@ export class AuthController {
 
   @Post("login")
   @ApiOperation({ summary: "Log in with email and password" })
-  @ApiResponse({ status: 200, description: "Login successful, auth cookies set." })
+  @ApiResponse({
+    status: 200,
+    description: "Login successful, auth cookies set.",
+  })
   @ApiResponse({ status: 401, description: "Invalid credentials." })
   async login(
     @Body() dto: LoginDto,
@@ -54,7 +68,10 @@ export class AuthController {
   @Post("refresh")
   @ApiOperation({ summary: "Refresh access token using refresh token cookie" })
   @ApiResponse({ status: 200, description: "New auth cookies set." })
-  @ApiResponse({ status: 401, description: "Invalid or expired refresh token." })
+  @ApiResponse({
+    status: 401,
+    description: "Invalid or expired refresh token.",
+  })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

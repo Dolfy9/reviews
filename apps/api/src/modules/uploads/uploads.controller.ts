@@ -21,8 +21,13 @@ export class UploadsController {
 
   @Post("presigned-url")
   @ApiCookieAuth()
-  @ApiOperation({ summary: "Get a presigned URL for direct-to-MinIO file upload" })
-  @ApiResponse({ status: 200, description: "Returns uploadUrl, publicUrl, and objectName." })
+  @ApiOperation({
+    summary: "Get a presigned URL for direct-to-MinIO file upload",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Returns uploadUrl, publicUrl, and objectName.",
+  })
   @ApiResponse({ status: 400, description: "Filename is required." })
   async getPresignedUrl(@Body() dto: PresignedUrlRequestDto) {
     return this.uploadsService.getPresignedUrl(dto.filename);

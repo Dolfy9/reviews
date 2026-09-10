@@ -20,7 +20,19 @@ const SEED_USERS_DATA = [
 ];
 
 async function main() {
+  const shouldReset = process.env.RESET === "true";
+
   await prisma.$transaction(async (tx) => {
+    const usersCount = await tx.user.count();
+    const productsCount = await tx.product.count();
+
+    if (!shouldReset && usersCount > 0 && productsCount > 0) {
+      console.log(
+        "Database already seeded. Skipping. Use RESET=true to re-seed.",
+      );
+      return;
+    }
+
     await tx.reviewVote.deleteMany();
     await tx.refreshToken.deleteMany();
     await tx.review.deleteMany();

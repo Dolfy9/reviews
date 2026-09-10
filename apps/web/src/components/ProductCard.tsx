@@ -25,7 +25,9 @@ const METADATA_LABELS: Record<string, string> = {
   minOS: "Requires",
 };
 
-function getTopMetadata(metadata: Record<string, unknown> | null | undefined): Array<{ label: string; value: string }> {
+function getTopMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): Array<{ label: string; value: string }> {
   if (!metadata) return [];
   const result: Array<{ label: string; value: string }> = [];
   for (const [key, value] of Object.entries(metadata)) {
@@ -65,7 +67,7 @@ export function ProductCard({ product }: { product: ProductDto }) {
             alt={product.name}
             loading="lazy"
             onError={() => setImgError(true)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
@@ -102,7 +104,9 @@ export function ProductCard({ product }: { product: ProductDto }) {
                 key={m.label}
                 className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400"
               >
-                <span className="text-slate-400 dark:text-slate-500">{m.label}:</span>
+                <span className="text-slate-400 dark:text-slate-500">
+                  {m.label}:
+                </span>
                 <span className="ml-1 truncate max-w-[80px]">{m.value}</span>
               </span>
             ))}

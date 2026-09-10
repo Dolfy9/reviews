@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Moon, Sun, LogOut, Shield, User, Menu, X, Waves } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  LogOut,
+  Shield,
+  User,
+  Menu,
+  X,
+  Waves,
+  BookOpen,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -43,6 +53,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               {dark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+            <a
+              href="http://localhost:3001/api/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:bg-sky-50 hover:text-sky-600 dark:text-slate-400 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
+              title="Open API documentation"
+            >
+              <BookOpen size={16} />
+              API docs
+            </a>
             {user ? (
               <>
                 <span className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -55,10 +75,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-sky-600 transition-all duration-300 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/30"
                   >
                     <Shield size={16} />
-                    Admin
+                    Admin panel
                   </Link>
                 )}
-                <button onClick={logout} className="btn-secondary !px-3.5 !py-2">
+                <button
+                  onClick={logout}
+                  className="btn-secondary !px-3.5 !py-2"
+                >
                   <LogOut size={16} />
                   Log out
                 </button>
@@ -94,6 +117,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {dark ? <Sun size={16} /> : <Moon size={16} />}
                 {dark ? "Light mode" : "Dark mode"}
               </button>
+              <a
+                href="http://localhost:3001/api/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400"
+              >
+                <BookOpen size={16} />
+                API docs
+              </a>
               {user ? (
                 <>
                   <span className="px-3 text-sm text-slate-600 dark:text-slate-400">
@@ -106,11 +139,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-sky-600 dark:text-sky-400"
                     >
                       <Shield size={16} />
-                      Admin
+                      Admin panel
                     </Link>
                   )}
                   <button
-                    onClick={() => { logout(); setMenuOpen(false); }}
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                    }}
                     className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400"
                   >
                     <LogOut size={16} />
@@ -147,7 +183,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <Waves className="text-sky-500" size={16} />
-              <span className="text-sm font-semibold gradient-text">ReviewHub</span>
+              <span className="text-sm font-semibold gradient-text">
+                ReviewHub
+              </span>
             </div>
             <p className="text-sm text-slate-400 dark:text-slate-600">
               Discover. Review. Decide.

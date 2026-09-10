@@ -7,7 +7,16 @@ import { authApi } from "../api/auth";
 import { useAuthStore } from "../store/authStore";
 import { useToast } from "../hooks/useToast";
 import { friendlyErrorMessage } from "../api/client";
-import { AlertCircle, Mail, Lock, Loader2, Waves, ArrowRight, UserCircle, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  Mail,
+  Lock,
+  Loader2,
+  Waves,
+  ArrowRight,
+  UserCircle,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -83,7 +92,9 @@ export default function Login() {
                 Demo Credentials
               </p>
               <button
-                onClick={() => fillCredentials("admin@example.com", "Password123!")}
+                onClick={() =>
+                  fillCredentials("admin@example.com", "Password123!")
+                }
                 className="group flex w-full items-center gap-3 rounded-xl border border-white/20 bg-white/10 p-3 text-left backdrop-blur-sm transition hover:bg-white/20"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
@@ -91,11 +102,15 @@ export default function Login() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-white">Admin</div>
-                  <div className="truncate text-xs text-sky-50/70">admin@example.com</div>
+                  <div className="truncate text-xs text-sky-50/70">
+                    admin@example.com
+                  </div>
                 </div>
               </button>
               <button
-                onClick={() => fillCredentials("alice@example.com", "Password123!")}
+                onClick={() =>
+                  fillCredentials("alice@example.com", "Password123!")
+                }
                 className="group flex w-full items-center gap-3 rounded-xl border border-white/20 bg-white/10 p-3 text-left backdrop-blur-sm transition hover:bg-white/20"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
@@ -103,7 +118,9 @@ export default function Login() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold text-white">User</div>
-                  <div className="truncate text-xs text-sky-50/70">alice@example.com</div>
+                  <div className="truncate text-xs text-sky-50/70">
+                    alice@example.com
+                  </div>
                 </div>
               </button>
               <p className="pt-1 text-center text-xs text-sky-50/50">
@@ -120,11 +137,15 @@ export default function Login() {
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-[0_8px_20px_rgba(14,165,233,0.3)]">
               <Waves className="text-white" size={24} />
             </div>
-            <span className="text-lg font-extrabold tracking-tight">ReviewHub</span>
+            <span className="text-lg font-extrabold tracking-tight">
+              ReviewHub
+            </span>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-extrabold tracking-tight">Welcome back</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Welcome back
+            </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Sign in to continue to ReviewHub
             </p>
@@ -143,7 +164,10 @@ export default function Login() {
                 Email
               </label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Mail
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
                 <input
                   {...register("email")}
                   type="email"
@@ -152,7 +176,9 @@ export default function Login() {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <div>
@@ -160,7 +186,10 @@ export default function Login() {
                 Password
               </label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Lock
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
                 <input
                   {...register("password")}
                   type="password"
@@ -169,7 +198,9 @@ export default function Login() {
                 />
               </div>
               {errors.password && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
             <button
@@ -194,7 +225,10 @@ export default function Login() {
 
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
             No account?{" "}
-            <Link to="/register" className="font-semibold text-sky-600 hover:underline dark:text-sky-400">
+            <Link
+              to="/register"
+              className="font-semibold text-sky-600 hover:underline dark:text-sky-400"
+            >
               Create one
             </Link>
           </p>

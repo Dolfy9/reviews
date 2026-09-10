@@ -13,6 +13,8 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Check,
   SlidersHorizontal,
 } from "lucide-react";
@@ -33,7 +35,9 @@ export default function Home() {
   const [sort, setSort] = useState<ProductListQuery["sort"]>("newest");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | undefined>(undefined);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<
+    string | undefined
+  >(undefined);
 
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
@@ -41,7 +45,8 @@ export default function Home() {
   });
 
   // Fetch subcategories when exactly one parent category is selected
-  const activeCategory = selectedCategories.length === 1 ? selectedCategories[0] : undefined;
+  const activeCategory =
+    selectedCategories.length === 1 ? selectedCategories[0] : undefined;
   const subcategoriesQuery = useQuery({
     queryKey: ["subcategories", activeCategory],
     queryFn: () => productsApi.subcategories(activeCategory!),
@@ -83,9 +88,7 @@ export default function Home() {
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(cat)
-        ? prev.filter((c) => c !== cat)
-        : [...prev, cat],
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
     );
     setSelectedSubcategory(undefined);
     setPage(1);
@@ -109,40 +112,49 @@ export default function Home() {
 
   const productCount = productsQuery.data?.meta.total ?? 0;
   const totalPages = productsQuery.data?.meta.totalPages ?? 1;
-  const hasActiveFilters = selectedCategories.length > 0 || searchQuery || selectedSubcategory;
+  const hasActiveFilters =
+    selectedCategories.length > 0 || searchQuery || selectedSubcategory;
 
   return (
     <div className="space-y-5">
       {/* Compact hero — only on first load with no filters */}
-      {!searchQuery && selectedCategories.length === 0 && !selectedSubcategory && (
-        <section className="animate-fade-in relative overflow-hidden rounded-2xl border border-sky-100/50 bg-gradient-to-br from-sky-50 via-slate-50 to-cyan-50 px-6 py-8 dark:border-sky-900/20 dark:from-sky-950/20 dark:via-[#0c1929] dark:to-cyan-950/20">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -top-16 left-1/2 h-32 w-80 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
-          </div>
-          <div className="relative flex flex-col items-center gap-3 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/50 bg-white/60 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-800/50 dark:bg-sky-950/30 dark:text-sky-300">
-              <Waves size={12} />
-              Trusted Reviews Platform
+      {!searchQuery &&
+        selectedCategories.length === 0 &&
+        !selectedSubcategory && (
+          <section className="animate-fade-in relative overflow-hidden rounded-2xl border border-sky-100/50 bg-gradient-to-br from-sky-50 via-slate-50 to-cyan-50 px-6 py-8 dark:border-sky-900/20 dark:from-sky-950/20 dark:via-[#0c1929] dark:to-cyan-950/20">
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -top-16 left-1/2 h-32 w-80 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
             </div>
-            <h1 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">
-              Discover products you'll love.{" "}
-              <span className="gradient-text">Share reviews that matter.</span>
-            </h1>
-            <p className="max-w-lg text-sm text-slate-500 dark:text-slate-400">
-              Find the best products through authentic reviews from real data sources.
-            </p>
-            <div className="mt-1 w-full max-w-md">
-              <AutocompleteSearch onSearch={handleSearch} />
+            <div className="relative flex flex-col items-center gap-3 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/50 bg-white/60 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-800/50 dark:bg-sky-950/30 dark:text-sky-300">
+                <Waves size={12} />
+                Trusted Reviews Platform
+              </div>
+              <h1 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">
+                Discover products you'll love.{" "}
+                <span className="gradient-text">
+                  Share reviews that matter.
+                </span>
+              </h1>
+              <p className="max-w-lg text-sm text-slate-500 dark:text-slate-400">
+                Find the best products through authentic reviews from real data
+                sources.
+              </p>
+              <div className="mt-1 w-full max-w-md">
+                <AutocompleteSearch onSearch={handleSearch} />
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
       {/* Search bar when filtering */}
       {hasActiveFilters && (
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <AutocompleteSearch initialQuery={searchQuery} onSearch={handleSearch} />
+            <AutocompleteSearch
+              initialQuery={searchQuery}
+              onSearch={handleSearch}
+            />
           </div>
         </div>
       )}
@@ -224,7 +236,9 @@ export default function Home() {
           {/* Sort dropdown */}
           <select
             value={sort}
-            onChange={(e) => handleSort(e.target.value as ProductListQuery["sort"])}
+            onChange={(e) =>
+              handleSort(e.target.value as ProductListQuery["sort"])
+            }
             className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
           >
             {SORT_OPTIONS.map((opt) => (
@@ -236,62 +250,69 @@ export default function Home() {
         </div>
 
         {/* Expanded filters for many categories */}
-        {showFilters && categoriesQuery.data && categoriesQuery.data.length > 6 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
-            {categoriesQuery.data.slice(6).map((cat) => {
-              const isSelected = selectedCategories.includes(cat);
-              return (
-                <button
-                  key={cat}
-                  onClick={() => toggleCategory(cat)}
-                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                    isSelected
-                      ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
-                  }`
-                }
-                >
-                  {isSelected && <Check size={10} />}
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {showFilters &&
+          categoriesQuery.data &&
+          categoriesQuery.data.length > 6 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+              {categoriesQuery.data.slice(6).map((cat) => {
+                const isSelected = selectedCategories.includes(cat);
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => toggleCategory(cat)}
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                      isSelected
+                        ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+                    }`}
+                  >
+                    {isSelected && <Check size={10} />}
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
         {/* Subcategory chips — shown when exactly one parent category is selected */}
-        {activeCategory && subcategoriesQuery.data && subcategoriesQuery.data.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
-            <span className="text-xs font-semibold text-slate-400">Subcategories:</span>
-            <button
-              onClick={() => selectSubcategory(undefined)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                !selectedSubcategory
-                  ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
-                  : "border border-slate-200 bg-white text-slate-500 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
-              }`}
-            >
-              All
-            </button>
-            {subcategoriesQuery.data.map((sub) => {
-              const isSelected = selectedSubcategory === sub;
-              return (
-                <button
-                  key={sub}
-                  onClick={() => selectSubcategory(isSelected ? undefined : sub)}
-                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                    isSelected
-                      ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
-                      : "border border-slate-200 bg-white text-slate-500 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
-                  }`}
-                >
-                  {isSelected && <Check size={10} />}
-                  {sub}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {activeCategory &&
+          subcategoriesQuery.data &&
+          subcategoriesQuery.data.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+              <span className="text-xs font-semibold text-slate-400">
+                Subcategories:
+              </span>
+              <button
+                onClick={() => selectSubcategory(undefined)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                  !selectedSubcategory
+                    ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                    : "border border-slate-200 bg-white text-slate-500 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+                }`}
+              >
+                All
+              </button>
+              {subcategoriesQuery.data.map((sub) => {
+                const isSelected = selectedSubcategory === sub;
+                return (
+                  <button
+                    key={sub}
+                    onClick={() =>
+                      selectSubcategory(isSelected ? undefined : sub)
+                    }
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                      isSelected
+                        ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                        : "border border-slate-200 bg-white text-slate-500 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+                    }`}
+                  >
+                    {isSelected && <Check size={10} />}
+                    {sub}
+                  </button>
+                );
+              })}
+            </div>
+          )}
       </div>
 
       {/* Error */}
@@ -327,16 +348,35 @@ export default function Home() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
+          <button
+            onClick={() => setPage(1)}
+            disabled={page === 1}
+            aria-label="First page"
+            className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setPage(Math.max(1, page - 5))}
+            disabled={page === 1}
+            aria-label="Previous 5 pages"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+          >
+            <ChevronsLeft size={16} />
+          </button>
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
+            aria-label="Previous page"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
           >
             <ChevronLeft size={16} />
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .filter(
+              (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2,
+            )
             .map((p, idx, arr) => (
               <span key={p} className="flex items-center gap-1">
                 {idx > 0 && arr[idx - 1] !== p - 1 && (
@@ -357,9 +397,26 @@ export default function Home() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
+            aria-label="Next page"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
           >
             <ChevronRight size={16} />
+          </button>
+          <button
+            onClick={() => setPage(Math.min(totalPages, page + 5))}
+            disabled={page === totalPages}
+            aria-label="Next 5 pages"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+          >
+            <ChevronsRight size={16} />
+          </button>
+          <button
+            onClick={() => setPage(totalPages)}
+            disabled={page === totalPages}
+            aria-label="Last page"
+            className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition hover:border-sky-300 hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+          >
+            Last
           </button>
         </div>
       )}

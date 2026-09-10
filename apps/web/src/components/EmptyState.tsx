@@ -14,7 +14,12 @@ const icons = {
   search: SearchX,
 };
 
-export function EmptyState({ icon = "package", title, description, action }: EmptyStateProps) {
+export function EmptyState({
+  icon = "package",
+  title,
+  description,
+  action,
+}: EmptyStateProps) {
   const Icon = icons[icon];
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-sky-200 py-20 dark:border-sky-900/30">

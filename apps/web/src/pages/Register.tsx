@@ -48,7 +48,9 @@ export default function Register() {
               <Waves className="text-white" size={24} />
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-extrabold tracking-tight">Join ReviewHub</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight">
+                Join ReviewHub
+              </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Create your account and start reviewing
               </p>
@@ -65,7 +67,10 @@ export default function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <div className="relative">
-                <User className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <User
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   {...register("name")}
                   placeholder="Name (optional)"
@@ -73,12 +78,17 @@ export default function Register() {
                 />
               </div>
               {errors.name && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.name.message}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.name.message}
+                </p>
               )}
             </div>
             <div>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Mail
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   {...register("email")}
                   type="email"
@@ -87,12 +97,17 @@ export default function Register() {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <div>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Lock
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   {...register("password")}
                   type="password"
@@ -101,7 +116,9 @@ export default function Register() {
                 />
               </div>
               {errors.password && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1.5 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
             <button
@@ -116,7 +133,10 @@ export default function Register() {
 
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-sky-600 hover:underline dark:text-sky-400">
+            <Link
+              to="/login"
+              className="font-semibold text-sky-600 hover:underline dark:text-sky-400"
+            >
               Sign in
             </Link>
           </p>

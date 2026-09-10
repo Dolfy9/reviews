@@ -23,4 +23,8 @@ export const reviewsApi = {
     api
       .post<ReviewDto>(`/reviews/${reviewId}/vote`, data)
       .then((res) => res.data),
+  checkMine: (productId: string) =>
+    api
+      .get<{ review: ReviewDto | null }>(`/reviews/products/${productId}/mine`)
+      .then((res) => res.data),
 };

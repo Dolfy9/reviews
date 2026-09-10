@@ -53,7 +53,10 @@ export function AutocompleteSearch({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         closeDropdown();
       }
     };
@@ -89,7 +92,9 @@ export function AutocompleteSearch({
       setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+      setHighlightedIndex(
+        (prev) => (prev - 1 + suggestions.length) % suggestions.length,
+      );
     } else if (e.key === "Escape") {
       closeDropdown();
     }
@@ -144,7 +149,7 @@ export function AutocompleteSearch({
       </form>
 
       {/* Dropdown */}
-      {isOpen && (query.length > 0) && (
+      {isOpen && query.length > 0 && (
         <div className="animate-scale-in absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(14,165,233,0.12)] dark:border-slate-700/50 dark:bg-slate-800/95 dark:shadow-[0_12px_40px_rgba(14,165,233,0.08)]">
           {isLoading && (
             <div className="flex items-center gap-3 px-4 py-3 text-sm text-slate-400">

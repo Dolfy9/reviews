@@ -10,7 +10,10 @@ interface Toast {
   message: string;
 }
 
-const TOAST_STYLES: Record<ToastType, { icon: ReactNode; bar: string; ring: string }> = {
+const TOAST_STYLES: Record<
+  ToastType,
+  { icon: ReactNode; bar: string; ring: string }
+> = {
   success: {
     icon: <CheckCircle2 className="text-emerald-500" size={20} />,
     bar: "bg-emerald-500",
@@ -59,10 +62,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={t.id}
               className={`glass animate-slide-up flex items-center gap-3 overflow-hidden rounded-xl py-3 pl-4 pr-3 shadow-[0_8px_30px_rgba(14,165,233,0.12)] ring-1 ${style.ring}`}
             >
-              <div className={`absolute left-0 top-0 h-full w-1 ${style.bar}`} />
-              <div className="animate-fade-in shrink-0">
-                {style.icon}
-              </div>
+              <div
+                className={`absolute left-0 top-0 h-full w-1 ${style.bar}`}
+              />
+              <div className="animate-fade-in shrink-0">{style.icon}</div>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                 {t.message}
               </span>

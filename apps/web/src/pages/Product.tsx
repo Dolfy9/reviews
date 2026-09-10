@@ -8,13 +8,32 @@ import { reviewsApi } from "../api/reviews";
 import { ReviewCard } from "../components/ReviewCard";
 import { ProductCard } from "../components/ProductCard";
 import { StarRating } from "../components/StarRating";
+import { ReviewImageInput } from "../components/ReviewImageInput";
+import { ProsConsInput } from "../components/ProsConsInput";
 import { DetailSkeleton, ReviewSkeleton } from "../components/Skeletons";
 import { EmptyState } from "../components/EmptyState";
 import { useToast } from "../hooks/useToast";
 import { useAuthStore } from "../store/authStore";
 import { friendlyErrorMessage } from "../api/client";
-import { AlertCircle, CheckCircle2, Tag, Loader2, PenSquare, ArrowLeft, Waves, ImageOff, Sparkles, LogIn, X, ZoomIn, ChevronLeft, ChevronRight, Info } from "lucide-react";
-import { useState, useCallback } from "react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Tag,
+  Loader2,
+  PenSquare,
+  ArrowLeft,
+  Waves,
+  ImageOff,
+  Sparkles,
+  LogIn,
+  X,
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  MessageSquare,
+} from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
 
 export default function Product() {
   const { id } = useParams<{ id: string }>();
@@ -22,8 +41,15 @@ export default function Product() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [mainImageError, setMainImageError] = useState(false);
+  const [imgErrors, setImgErrors] = useState<Set<number>>(new Set());
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    setImgErrors(new Set());
+    setMainImageError(false);
+    setSelectedImage(0);
+  }, [id]);
 
   const openLightbox = useCallback(() => setLightboxOpen(true), []);
   const closeLightbox = useCallback(() => setLightboxOpen(false), []);
@@ -42,6 +68,12 @@ export default function Product() {
     enabled: Boolean(id),
   });
 
+  const myReviewQuery = useQuery({
+    queryKey: ["my-review", id],
+    queryFn: () => reviewsApi.checkMine(id ?? ""),
+    enabled: Boolean(id) && Boolean(user),
+  });
+
   const similarQuery = useQuery({
     queryKey: ["similar", id],
     queryFn: () => productsApi.similar(id ?? "", 4),
@@ -52,10 +84,19 @@ export default function Product() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateReviewInput>({
     resolver: zodResolver(createReviewSchema),
-    defaultValues: { rating: 5, title: "", content: "", images: [] },
+    defaultValues: {
+      rating: 5,
+      title: "",
+      content: "",
+      images: [],
+      pros: [],
+      cons: [],
+    },
   });
 
   const createReview = useMutation({
@@ -63,6 +104,7 @@ export default function Product() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reviews", id] });
       await queryClient.invalidateQueries({ queryKey: ["product", id] });
+      await queryClient.invalidateQueries({ queryKey: ["my-review", id] });
       reset();
       toast("Review submitted!", "success");
     },
@@ -83,7 +125,8 @@ export default function Product() {
         Failed to load product.
       </div>
     );
-  if (!productQuery.data) return <EmptyState icon="package" title="Product not found" />;
+  if (!productQuery.data)
+    return <EmptyState icon="package" title="Product not found" />;
 
   const product = productQuery.data;
   const hasImages = product.images.length > 0;
@@ -121,7 +164,7 @@ export default function Product() {
                   src={product.images[selectedImage]}
                   alt={product.name}
                   onError={() => setMainImageError(true)}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover/gallery:scale-105"
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover/gallery:scale-105"
                 />
                 <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-xs text-white opacity-0 transition group-hover/gallery:opacity-100">
                   <ZoomIn size={14} />
@@ -138,9 +181,23 @@ export default function Product() {
                         selectedImage === idx
                           ? "border-sky-500"
                           : "border-slate-200 hover:border-sky-300 dark:border-slate-700"
-                      }`}
+                      } ${imgErrors.has(idx) ? "bg-slate-100 dark:bg-slate-800" : ""}`}
                     >
-                      <img src={img} alt={`${product.name} ${idx + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                      {imgErrors.has(idx) ? (
+                        <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
+                          <ImageOff size={20} />
+                        </div>
+                      ) : (
+                        <img
+                          src={img}
+                          alt={`${product.name} ${idx + 1}`}
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                          onError={() =>
+                            setImgErrors((prev) => new Set([...prev, idx]))
+                          }
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -148,14 +205,19 @@ export default function Product() {
             </div>
           ) : (
             <div className="flex h-80 w-80 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
-              <ImageOff className="text-slate-300 dark:text-slate-600" size={48} />
+              <ImageOff
+                className="text-slate-300 dark:text-slate-600"
+                size={48}
+              />
             </div>
           )}
 
           {/* Info */}
           <div className="flex flex-1 flex-col">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                {product.name}
+              </h1>
               {product.category && (
                 <span className="badge-brand shrink-0">
                   <Tag size={10} />
@@ -176,12 +238,17 @@ export default function Product() {
                 </div>
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
                   {metadataEntries.map(([key, value]) => (
-                    <div key={key} className="flex justify-between gap-2 text-sm">
+                    <div
+                      key={key}
+                      className="flex justify-between gap-2 text-sm"
+                    >
                       <dt className="font-medium capitalize text-slate-500 dark:text-slate-400">
                         {key.replace(/([A-Z])/g, " $1").trim()}
                       </dt>
                       <dd className="truncate text-slate-700 dark:text-slate-300">
-                        {Array.isArray(value) ? value.join(", ") : String(value)}
+                        {Array.isArray(value)
+                          ? value.join(", ")
+                          : String(value)}
                       </dd>
                     </div>
                   ))}
@@ -217,7 +284,10 @@ export default function Product() {
           </button>
           {selectedImage > 0 && (
             <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                prevImage();
+              }}
               className="absolute left-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
             >
               <ChevronLeft size={28} />
@@ -225,7 +295,10 @@ export default function Product() {
           )}
           {selectedImage < product.images.length - 1 && (
             <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
               className="absolute right-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
             >
               <ChevronRight size={28} />
@@ -243,65 +316,134 @@ export default function Product() {
         </div>
       )}
 
-      {/* Review form or login prompt */}
+      {/* Review form, already-reviewed banner, or login prompt */}
       {user ? (
-        <div className="card animate-slide-up p-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500">
-              <PenSquare className="text-white" size={18} />
-            </div>
-            <h2 className="text-lg font-bold tracking-tight">Share your experience</h2>
+        myReviewQuery.isLoading ? (
+          <div className="card animate-pulse h-20 bg-slate-100 p-6 dark:bg-slate-800" />
+        ) : myReviewQuery.isError ? (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-400">
+            <AlertCircle size={18} />
+            Could not check your review status. Please refresh the page.
           </div>
-          {createReview.isError && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
-              <AlertCircle size={16} />
-              Failed to submit review. You may have already reviewed this product.
-            </div>
-          )}
-          {createReview.isSuccess && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
-              <CheckCircle2 size={16} />
-              Review submitted successfully.
-            </div>
-          )}
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
-            <div>
-              <input
-                {...register("title")}
-                placeholder="Review title"
-                className="input"
-              />
-              {errors.title && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.title.message}</p>
-              )}
+        ) : myReviewQuery.data?.review ? (
+          <div className="card animate-slide-up flex items-center gap-4 p-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_4px_14px_rgba(16,185,129,0.25)]">
+              <MessageSquare className="text-white" size={24} />
             </div>
             <div>
-              <textarea
-                {...register("content")}
-                rows={4}
-                placeholder="Share your thoughts..."
-                className="input resize-none"
-              />
-              {errors.content && (
-                <p className="mt-1.5 text-sm text-red-600">{errors.content.message}</p>
-              )}
+              <h2 className="text-base font-bold tracking-tight">
+                You've already reviewed this product
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                You rated it {myReviewQuery.data.review.rating}/5 stars. You can
+                only write one review per product.
+              </p>
             </div>
-            <div className="flex items-end gap-4">
-              <div className="w-32">
-                <label className="mb-1.5 block text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  Rating
-                </label>
+          </div>
+        ) : (
+          <div className="card animate-slide-up p-8">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500">
+                <PenSquare className="text-white" size={18} />
+              </div>
+              <h2 className="text-lg font-bold tracking-tight">
+                Share your experience
+              </h2>
+            </div>
+            {createReview.isError && (
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+                <AlertCircle size={16} />
+                Failed to submit review. You may have already reviewed this
+                product.
+              </div>
+            )}
+            {createReview.isSuccess && (
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
+                <CheckCircle2 size={16} />
+                Review submitted successfully.
+              </div>
+            )}
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
+              <div>
                 <input
-                  type="number"
-                  {...register("rating", { valueAsNumber: true })}
-                  min={1}
-                  max={5}
+                  {...register("title")}
+                  placeholder="Review title"
                   className="input"
                 />
+                {errors.title && (
+                  <p className="mt-1.5 text-sm text-red-600">
+                    {errors.title.message}
+                  </p>
+                )}
               </div>
-              {errors.rating && (
-                <p className="text-sm text-red-600">{errors.rating.message}</p>
-              )}
+              <div>
+                <textarea
+                  {...register("content")}
+                  rows={4}
+                  placeholder="Share your thoughts..."
+                  className="input resize-none"
+                />
+                {errors.content && (
+                  <p className="mt-1.5 text-sm text-red-600">
+                    {errors.content.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  Rating
+                </label>
+                <StarRating
+                  rating={watch("rating")}
+                  size={28}
+                  showValue={false}
+                  onChange={(n) =>
+                    setValue("rating", n, { shouldValidate: true })
+                  }
+                />
+                {errors.rating && (
+                  <p className="text-sm text-red-600">
+                    {errors.rating.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  Attach pictures
+                </label>
+                <ReviewImageInput
+                  images={watch("images") ?? []}
+                  onChange={(images) =>
+                    setValue("images", images, { shouldValidate: true })
+                  }
+                  onError={(msg) => toast(msg, "error")}
+                />
+                {errors.images && (
+                  <p className="text-sm text-red-600">
+                    {errors.images.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  Pros and cons
+                </label>
+                <ProsConsInput
+                  pros={watch("pros") ?? []}
+                  cons={watch("cons") ?? []}
+                  onProsChange={(pros) =>
+                    setValue("pros", pros, { shouldValidate: true })
+                  }
+                  onConsChange={(cons) =>
+                    setValue("cons", cons, { shouldValidate: true })
+                  }
+                />
+                {(errors.pros || errors.cons) && (
+                  <p className="text-sm text-red-600">
+                    {errors.pros?.message || errors.cons?.message}
+                  </p>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={isSubmitting || createReview.isPending}
@@ -312,16 +454,18 @@ export default function Product() {
                 )}
                 Submit review
               </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        )
       ) : (
         <div className="card animate-slide-up flex flex-col items-center gap-4 p-8 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-[0_4px_14px_rgba(14,165,233,0.25)]">
             <PenSquare className="text-white" size={24} />
           </div>
           <div>
-            <h2 className="text-lg font-bold tracking-tight">Share your experience</h2>
+            <h2 className="text-lg font-bold tracking-tight">
+              Share your experience
+            </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               You need to be logged in to write a review for this product.
             </p>
@@ -349,6 +493,11 @@ export default function Product() {
             <ReviewSkeleton />
             <ReviewSkeleton />
           </div>
+        ) : reviewsQuery.isError ? (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+            <AlertCircle size={18} />
+            Failed to load reviews. Please try again.
+          </div>
         ) : reviewsQuery.data?.data.length ? (
           reviewsQuery.data.data.map((review) => (
             <ReviewCard key={review.id} review={review} productId={id ?? ""} />
@@ -363,7 +512,19 @@ export default function Product() {
       </div>
 
       {/* Similar products */}
-      {similarQuery.data && similarQuery.data.length > 0 && (
+      {similarQuery.isLoading ? (
+        <div className="space-y-4">
+          <div className="h-6 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="card h-64 animate-pulse bg-slate-100 dark:bg-slate-800"
+              />
+            ))}
+          </div>
+        </div>
+      ) : similarQuery.data && similarQuery.data.length > 0 ? (
         <div className="space-y-4">
           <div className="flex items-center gap-2.5">
             <Sparkles className="text-sky-500" size={20} />
@@ -380,7 +541,7 @@ export default function Product() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

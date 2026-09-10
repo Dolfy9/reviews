@@ -25,6 +25,7 @@ import {
   ReviewListQueryDto,
 } from "./dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { JwtUser } from "../../common/types";
 
@@ -36,14 +37,50 @@ export class ReviewsController {
   @Get("products/:productId/reviews")
   @ApiOperation({ summary: "List approved reviews for a product" })
   @ApiParam({ name: "productId", type: String, description: "Product ID" })
-  @ApiQuery({ name: "page", required: false, type: Number, description: "Page number (default 1)" })
-  @ApiQuery({ name: "limit", required: false, type: Number, description: "Items per page (default 20, max 50)" })
-  @ApiResponse({ status: 200, description: "Paginated list of approved reviews." })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number (default 1)",
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Items per page (default 20, max 50)",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Paginated list of approved reviews.",
+  })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiCookieAuth()
   findByProduct(
     @Param("productId") productId: string,
     @Query() query: ReviewListQueryDto,
+    @CurrentUser() user?: JwtUser,
   ) {
-    return this.reviewsService.findByProduct(productId, query);
+    return this.reviewsService.findByProduct(productId, query, user?.userId);
+  }
+
+  @Get("products/:productId/mine")
+  @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: "Check if current user already reviewed a product" })
+  @ApiParam({ name: "productId", type: String, description: "Product ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Returns the user's review if it exists, null otherwise.",
+  })
+  async checkMine(
+    @Param("productId") productId: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    const review = await this.reviewsService.findByProductAndUser(
+      productId,
+      user.userId,
+    );
+    return { review: review ?? null };
   }
 
   @Post("products/:productId/reviews")
@@ -52,7 +89,10 @@ export class ReviewsController {
   @ApiOperation({ summary: "Create a review for a product" })
   @ApiParam({ name: "productId", type: String, description: "Product ID" })
   @ApiResponse({ status: 201, description: "Review created." })
-  @ApiResponse({ status: 400, description: "Already reviewed this product or invalid input." })
+  @ApiResponse({
+    status: 400,
+    description: "Already reviewed this product or invalid input.",
+  })
   @ApiResponse({ status: 404, description: "Product not found." })
   create(
     @Param("productId") productId: string,
@@ -102,9 +142,14 @@ export class ReviewsController {
   @Post(":id/vote")
   @UseGuards(JwtAuthGuard)
   @ApiCookieAuth()
-  @ApiOperation({ summary: "Vote on a review (helpful / not helpful). Toggles if same vote." })
+  @ApiOperation({
+    summary: "Vote on a review (helpful / not helpful). Toggles if same vote.",
+  })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
-  @ApiResponse({ status: 200, description: "Vote recorded, updated review returned." })
+  @ApiResponse({
+    status: 200,
+    description: "Vote recorded, updated review returned.",
+  })
   @ApiResponse({ status: 404, description: "Review not found." })
   vote(
     @Param("id") reviewId: string,

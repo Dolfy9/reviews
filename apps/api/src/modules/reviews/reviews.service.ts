@@ -40,15 +40,16 @@ export class ReviewsService {
   async findByProduct(
     productId: string,
     query: ReviewListQuery,
+    userId?: string,
   ): Promise<PaginatedResponse<ReviewDto>> {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
     const [reviews, total] = await Promise.all([
-      this.reviewsRepository.findByProduct(productId, skip, limit),
+      this.reviewsRepository.findByProduct(productId, skip, limit, userId),
       this.reviewsRepository.countByProduct(productId),
     ]);
     return buildPaginatedResponse(
-      reviews.map((review) => toReviewDto(review)),
+      reviews.map((review) => toReviewDto(review, userId)),
       page,
       limit,
       total,
@@ -109,6 +110,8 @@ export class ReviewsService {
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.content !== undefined) data.content = dto.content;
     if (dto.images !== undefined) data.images = dto.images;
+    if (dto.pros !== undefined) data.pros = dto.pros;
+    if (dto.cons !== undefined) data.cons = dto.cons;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.review.update({ where: { id: reviewId }, data });
@@ -159,21 +162,58 @@ export class ReviewsService {
     }
 
     const existing = await this.reviewsRepository.findVote(reviewId, userId);
+    let helpfulDelta = 0;
+    let notHelpfulDelta = 0;
 
     if (existing && existing.type === dto.type) {
+      // Toggle off: remove the user's vote and decrement the counter they voted on
       await this.reviewsRepository.deleteVote(existing.id);
+      if (dto.type === "HELPFUL") {
+        helpfulDelta = -1;
+      } else {
+        notHelpfulDelta = -1;
+      }
     } else if (existing) {
-      await this.reviewsRepository.updateVote(existing.id, dto.type);
-    } else {
+      // Switch vote: delete old, create new, and adjust both counters
+      await this.reviewsRepository.deleteVote(existing.id);
       await this.reviewsRepository.createVote({
         review: { connect: { id: reviewId } },
         user: { connect: { id: userId } },
         type: dto.type as "HELPFUL" | "NOT_HELPFUL",
       });
+      if (existing.type === "HELPFUL") {
+        helpfulDelta = -1;
+        notHelpfulDelta = 1;
+      } else {
+        notHelpfulDelta = -1;
+        helpfulDelta = 1;
+      }
+    } else {
+      // New vote: create and increment the chosen counter
+      await this.reviewsRepository.createVote({
+        review: { connect: { id: reviewId } },
+        user: { connect: { id: userId } },
+        type: dto.type as "HELPFUL" | "NOT_HELPFUL",
+      });
+      if (dto.type === "HELPFUL") {
+        helpfulDelta = 1;
+      } else {
+        notHelpfulDelta = 1;
+      }
     }
 
-    await this.reviewsRepository.updateVoteCounts(reviewId);
-    return this.findById(reviewId);
+    // Update counters in place, never dropping below 0 and preserving preseeded counts
+    const newHelpfulCount = Math.max(0, review.helpfulCount + helpfulDelta);
+    const newNotHelpfulCount = Math.max(
+      0,
+      review.notHelpfulCount + notHelpfulDelta,
+    );
+    await this.reviewsRepository.update(reviewId, {
+      helpfulCount: newHelpfulCount,
+      notHelpfulCount: newNotHelpfulCount,
+    });
+
+    return this.findById(reviewId, userId);
   }
 
   async updateStatus(
@@ -220,12 +260,19 @@ export class ReviewsService {
     );
   }
 
-  async findById(reviewId: string): Promise<ReviewDto> {
-    const review = await this.reviewsRepository.findByIdWithUser(reviewId);
+  async findById(reviewId: string, userId?: string): Promise<ReviewDto> {
+    const review = await this.reviewsRepository.findByIdWithUser(
+      reviewId,
+      userId,
+    );
     if (!review) {
       throw new NotFoundException("Review not found");
     }
-    return toReviewDto(review);
+    return toReviewDto(review, userId);
+  }
+
+  async findByProductAndUser(productId: string, userId: string) {
+    return this.reviewsRepository.findByProductAndUser(productId, userId);
   }
 
   private async recalculateProductRating(

@@ -3,6 +3,22 @@ import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
+const SEED_USERS_DATA = [
+  { email: "alice@example.com", name: "Alice" },
+  { email: "bob@example.com", name: "Bob" },
+  { email: "joe@example.com", name: "Joe" },
+  { email: "charlie@example.com", name: "Charlie" },
+  { email: "dave@example.com", name: "Dave" },
+  { email: "eve@example.com", name: "Eve" },
+  { email: "frank@example.com", name: "Frank" },
+  { email: "grace@example.com", name: "Grace" },
+  { email: "heidi@example.com", name: "Heidi" },
+  { email: "ivan@example.com", name: "Ivan" },
+  { email: "judy@example.com", name: "Judy" },
+  { email: "kevin@example.com", name: "Kevin" },
+  { email: "laura@example.com", name: "Laura" },
+];
+
 async function main() {
   await prisma.$transaction(async (tx) => {
     await tx.reviewVote.deleteMany();
@@ -22,21 +38,23 @@ async function main() {
       },
     });
 
-    const alice = await tx.user.create({
-      data: {
-        email: "alice@example.com",
-        passwordHash,
-        name: "Alice",
-      },
-    });
+    const seedUsers = await Promise.all(
+      SEED_USERS_DATA.map((u) =>
+        tx.user.create({
+          data: {
+            email: u.email,
+            passwordHash,
+            name: u.name,
+          },
+        }),
+      ),
+    );
 
-    const bob = await tx.user.create({
-      data: {
-        email: "bob@example.com",
-        passwordHash,
-        name: "Bob",
-      },
-    });
+    function randomSeedUser() {
+      const user = seedUsers[Math.floor(Math.random() * seedUsers.length)];
+      if (!user) throw new Error("No seed users available");
+      return user;
+    }
 
     const products = await Promise.all([
       tx.product.create({
@@ -95,12 +113,14 @@ async function main() {
       tx.review.create({
         data: {
           productId: mouse.id,
-          userId: alice.id,
+          userId: randomSeedUser().id,
           rating: 5,
           title: "Great mouse for daily use",
           content:
             "The mouse is very comfortable and the battery lasts for weeks. Highly recommended.",
           images: [],
+          pros: [],
+          cons: [],
           helpfulCount: 0,
           notHelpfulCount: 0,
           status: "APPROVED",
@@ -109,12 +129,14 @@ async function main() {
       tx.review.create({
         data: {
           productId: mouse.id,
-          userId: bob.id,
+          userId: randomSeedUser().id,
           rating: 4,
           title: "Good, but a bit small",
           content:
             "Works well, but the shape is a little too small for my hands.",
           images: [],
+          pros: [],
+          cons: [],
           helpfulCount: 0,
           notHelpfulCount: 0,
           status: "APPROVED",
@@ -123,12 +145,14 @@ async function main() {
       tx.review.create({
         data: {
           productId: keyboard.id,
-          userId: alice.id,
+          userId: randomSeedUser().id,
           rating: 5,
           title: "Best keyboard I have owned",
           content:
             "The tactile feel and customization options make this keyboard a joy to use.",
           images: [],
+          pros: [],
+          cons: [],
           helpfulCount: 0,
           notHelpfulCount: 0,
           status: "APPROVED",
@@ -137,12 +161,14 @@ async function main() {
       tx.review.create({
         data: {
           productId: headphones.id,
-          userId: bob.id,
+          userId: randomSeedUser().id,
           rating: 3,
           title: "Decent, but expensive",
           content:
             "Sound quality is good but I expected better noise cancellation at this price.",
           images: [],
+          pros: [],
+          cons: [],
           helpfulCount: 0,
           notHelpfulCount: 0,
           status: "APPROVED",
@@ -151,11 +177,13 @@ async function main() {
       tx.review.create({
         data: {
           productId: mugs.id,
-          userId: alice.id,
+          userId: randomSeedUser().id,
           rating: 5,
           title: "Beautiful mugs",
           content: "The colors are vibrant and the mugs feel high quality.",
           images: [],
+          pros: [],
+          cons: [],
           helpfulCount: 0,
           notHelpfulCount: 0,
           status: "APPROVED",

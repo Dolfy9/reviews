@@ -1,7 +1,25 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PrismaService } from "../../config/prisma.service";
 import { Prisma } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 import { EmbeddingService } from "../search/embedding.service";
+
+export interface MiningProgressEvent {
+  step:
+    | "start"
+    | "fetching"
+    | "fetched"
+    | "inserting"
+    | "product_inserted"
+    | "source_done"
+    | "source_error"
+    | "complete";
+  source?: string;
+  message: string;
+  timestamp: string;
+  data?: Record<string, unknown>;
+}
 
 /* ---------- Types ---------- */
 
@@ -57,31 +75,95 @@ function randomPage(maxPage: number): number {
 }
 
 const ITUNES_MOVIE_TERMS = [
-  "action", "comedy", "drama", "horror", "sci-fi", "romance",
-  "thriller", "documentary", "animation", "adventure", "fantasy",
-  "mystery", "crime", "family", "history", "war", "music",
-  "western", "biography", "sport",
+  "action",
+  "comedy",
+  "drama",
+  "horror",
+  "sci-fi",
+  "romance",
+  "thriller",
+  "documentary",
+  "animation",
+  "adventure",
+  "fantasy",
+  "mystery",
+  "crime",
+  "family",
+  "history",
+  "war",
+  "music",
+  "western",
+  "biography",
+  "sport",
 ];
 
 const ITUNES_PODCAST_TERMS = [
-  "technology", "business", "health", "science", "history", "comedy",
-  "news", "education", "true crime", "sports", "politics", "culture",
-  "gaming", "design", "marketing", "finance", "psychology", "travel",
-  "food", "literature",
+  "technology",
+  "business",
+  "health",
+  "science",
+  "history",
+  "comedy",
+  "news",
+  "education",
+  "true crime",
+  "sports",
+  "politics",
+  "culture",
+  "gaming",
+  "design",
+  "marketing",
+  "finance",
+  "psychology",
+  "travel",
+  "food",
+  "literature",
 ];
 
 const ITUNES_APP_TERMS = [
-  "games", "social", "photo", "fitness", "music", "finance",
-  "education", "travel", "shopping", "news", "weather", "productivity",
-  "health", "entertainment", "lifestyle", "navigation", "reference",
-  "utilities", "business", "sports",
+  "games",
+  "social",
+  "photo",
+  "fitness",
+  "music",
+  "finance",
+  "education",
+  "travel",
+  "shopping",
+  "news",
+  "weather",
+  "productivity",
+  "health",
+  "entertainment",
+  "lifestyle",
+  "navigation",
+  "reference",
+  "utilities",
+  "business",
+  "sports",
 ];
 
 const OPENLIBRARY_TERMS = [
-  "fiction", "history", "science", "mystery", "romance", "fantasy",
-  "biography", "poetry", "adventure", "philosophy", "psychology",
-  "cooking", "travel", "art", "music", "business", "technology",
-  "nature", "space", "war",
+  "fiction",
+  "history",
+  "science",
+  "mystery",
+  "romance",
+  "fantasy",
+  "biography",
+  "poetry",
+  "adventure",
+  "philosophy",
+  "psychology",
+  "cooking",
+  "travel",
+  "art",
+  "music",
+  "business",
+  "technology",
+  "nature",
+  "space",
+  "war",
 ];
 
 function randomTerm<T>(arr: readonly T[]): T {
@@ -155,14 +237,43 @@ const REVIEW_CONTENTS_NEGATIVE = [
   "Disappointed with this purchase. The product arrived with issues and customer service wasn't helpful. Would not buy again.",
 ];
 
+const SEED_USERS = [
+  { email: "alice@example.com", name: "Alice" },
+  { email: "bob@example.com", name: "Bob" },
+  { email: "joe@example.com", name: "Joe" },
+  { email: "charlie@example.com", name: "Charlie" },
+  { email: "dave@example.com", name: "Dave" },
+  { email: "eve@example.com", name: "Eve" },
+  { email: "frank@example.com", name: "Frank" },
+  { email: "grace@example.com", name: "Grace" },
+  { email: "heidi@example.com", name: "Heidi" },
+  { email: "ivan@example.com", name: "Ivan" },
+  { email: "judy@example.com", name: "Judy" },
+  { email: "kevin@example.com", name: "Kevin" },
+  { email: "laura@example.com", name: "Laura" },
+];
+
 function generateReviewsForProduct(
   productId: string,
   userIds: string[],
   minReviews: number,
   maxReviews: number,
-): Array<{ productId: string; userId: string; rating: number; title: string; content: string }> {
-  const count = Math.floor(Math.random() * (maxReviews - minReviews + 1)) + minReviews;
-  const reviews: Array<{ productId: string; userId: string; rating: number; title: string; content: string }> = [];
+): Array<{
+  productId: string;
+  userId: string;
+  rating: number;
+  title: string;
+  content: string;
+}> {
+  const count =
+    Math.floor(Math.random() * (maxReviews - minReviews + 1)) + minReviews;
+  const reviews: Array<{
+    productId: string;
+    userId: string;
+    rating: number;
+    title: string;
+    content: string;
+  }> = [];
   const usedUserIds = new Set<string>();
 
   for (let i = 0; i < count && i < userIds.length; i++) {
@@ -205,7 +316,7 @@ function generateReviewsForProduct(
 async function fetchOpenFoodFacts(count: number): Promise<NormalizedProduct[]> {
   const pageSize = Math.min(count, 100);
   const page = randomPage(20);
-  const url = `https://world.openfoodfacts.org/api/v2/search?fields=product_name,brands,categories,image_url,image_front_url,image_nutrition_url,image_ingredients_url,quantity,nutrition_grades,ingredients_text,allergens,nutriments,countries,stores,labels,code&sort_by=popularity&pageSize=${pageSize}&page=${page}`;
+  const url = `https://world.openfoodfacts.org/api/v2/search?fields=product_name,brands,categories,image_url,image_front_url,image_nutrition_url,image_ingredients_url,quantity,nutrition_grades,ingredients_text,allergens,nutriments,countries,stores,labels,code&page_size=${pageSize}&page=${page}`;
   const res = await fetch(url, {
     headers: {
       "User-Agent": "ReviewHub/1.0 (product reviews platform; data feed)",
@@ -219,23 +330,29 @@ async function fetchOpenFoodFacts(count: number): Promise<NormalizedProduct[]> {
   return (data.products ?? [])
     .filter((p) => p.product_name && p.product_name.trim().length > 0)
     .map((p) => {
-      const cats = (p.categories ?? "").split(",").map((c) => c.trim().toLowerCase());
+      const cats = (p.categories ?? "")
+        .split(",")
+        .map((c) => c.trim().toLowerCase());
       const category = cats.find((c) => c.length > 0) ?? "food";
       const parts: string[] = [];
       if (p.brands) parts.push(`Brand: ${p.brands}`);
       if (p.quantity) parts.push(`Size: ${p.quantity}`);
-      if (p.nutrition_grades) parts.push(`Nutri-Score: ${p.nutrition_grades.toUpperCase()}`);
+      if (p.nutrition_grades)
+        parts.push(`Nutri-Score: ${p.nutrition_grades.toUpperCase()}`);
       const nutriRating = nutriScoreToRating(p.nutrition_grades);
       const images: string[] = [];
       if (p.image_url) images.push(p.image_url);
-      if (p.image_front_url && p.image_front_url !== p.image_url) images.push(p.image_front_url);
+      if (p.image_front_url && p.image_front_url !== p.image_url)
+        images.push(p.image_front_url);
       if (p.image_nutrition_url) images.push(p.image_nutrition_url);
       if (p.image_ingredients_url) images.push(p.image_ingredients_url);
       const metadata: Record<string, unknown> = {};
       if (p.brands) metadata["brand"] = p.brands;
       if (p.quantity) metadata["quantity"] = p.quantity;
-      if (p.nutrition_grades) metadata["nutriScore"] = p.nutrition_grades.toUpperCase();
-      if (p.ingredients_text) metadata["ingredients"] = p.ingredients_text.slice(0, 500);
+      if (p.nutrition_grades)
+        metadata["nutriScore"] = p.nutrition_grades.toUpperCase();
+      if (p.ingredients_text)
+        metadata["ingredients"] = p.ingredients_text.slice(0, 500);
       if (p.allergens) metadata["allergens"] = p.allergens;
       if (p.countries) metadata["countries"] = p.countries;
       if (p.stores) metadata["stores"] = p.stores;
@@ -245,7 +362,9 @@ async function fetchOpenFoodFacts(count: number): Promise<NormalizedProduct[]> {
       metadata["categories"] = cats;
       return {
         name: p.product_name!.trim(),
-        description: parts.length ? parts.join(". ") + "." : "Food product from Open Food Facts.",
+        description: parts.length
+          ? parts.join(". ") + "."
+          : "Food product from Open Food Facts.",
         price: randomPrice(1.5, 12),
         category,
         parentCategory: "Food",
@@ -297,8 +416,10 @@ async function fetchITunesMovies(count: number): Promise<NormalizedProduct[]> {
       const metadata: Record<string, unknown> = {};
       if (r.artistName) metadata["director"] = r.artistName;
       if (r.primaryGenreName) metadata["genre"] = r.primaryGenreName;
-      if (r.contentAdvisoryRating) metadata["contentRating"] = r.contentAdvisoryRating;
-      if (r.trackTimeMillis) metadata["runtime"] = `${Math.round(r.trackTimeMillis / 60000)} min`;
+      if (r.contentAdvisoryRating)
+        metadata["contentRating"] = r.contentAdvisoryRating;
+      if (r.trackTimeMillis)
+        metadata["runtime"] = `${Math.round(r.trackTimeMillis / 60000)} min`;
       if (r.releaseDate) metadata["releaseDate"] = r.releaseDate;
       if (r.country) metadata["country"] = r.country;
       if (r.trackViewUrl) metadata["iTunesUrl"] = r.trackViewUrl;
@@ -320,7 +441,9 @@ async function fetchITunesMovies(count: number): Promise<NormalizedProduct[]> {
     });
 }
 
-async function fetchITunesPodcasts(count: number): Promise<NormalizedProduct[]> {
+async function fetchITunesPodcasts(
+  count: number,
+): Promise<NormalizedProduct[]> {
   const limit = Math.min(count, 100);
   const res = await fetch(
     `https://itunes.apple.com/search?term=${encodeURIComponent(randomTerm(ITUNES_PODCAST_TERMS))}&media=podcast&limit=${limit}`,
@@ -357,7 +480,9 @@ async function fetchITunesPodcasts(count: number): Promise<NormalizedProduct[]> 
       if (r.collectionViewUrl) metadata["iTunesUrl"] = r.collectionViewUrl;
       return {
         name: (r.trackName ?? r.collectionName ?? "").trim(),
-        description: parts.length ? parts.join(". ") + "." : "Podcast from iTunes.",
+        description: parts.length
+          ? parts.join(". ") + "."
+          : "Podcast from iTunes.",
         price: 0,
         category: (r.primaryGenreName ?? "podcasts").toLowerCase(),
         parentCategory: "Podcasts",
@@ -403,26 +528,32 @@ async function fetchITunesApps(count: number): Promise<NormalizedProduct[]> {
       const parts: string[] = [];
       if (r.sellerName) parts.push(`Developer: ${r.sellerName}`);
       if (r.primaryGenreName) parts.push(`Category: ${r.primaryGenreName}`);
-      if (r.averageUserRating) parts.push(`Rating: ${r.averageUserRating.toFixed(1)}/5`);
+      if (r.averageUserRating)
+        parts.push(`Rating: ${r.averageUserRating.toFixed(1)}/5`);
       if (r.userRatingCount) parts.push(`${r.userRatingCount} ratings`);
       const metadata: Record<string, unknown> = {};
       if (r.sellerName) metadata["developer"] = r.sellerName;
       if (r.primaryGenreName) metadata["genre"] = r.primaryGenreName;
-      if (r.contentAdvisoryRating) metadata["contentRating"] = r.contentAdvisoryRating;
+      if (r.contentAdvisoryRating)
+        metadata["contentRating"] = r.contentAdvisoryRating;
       if (r.version) metadata["version"] = r.version;
       if (r.minimumOsVersion) metadata["minOS"] = r.minimumOsVersion;
       if (r.languages) metadata["languages"] = r.languages;
-      if (r.fileSizeBytes) metadata["fileSize"] = `${(r.fileSizeBytes / 1048576).toFixed(1)} MB`;
-      if (r.currentVersionReleaseDate) metadata["updated"] = r.currentVersionReleaseDate;
+      if (r.fileSizeBytes)
+        metadata["fileSize"] = `${(r.fileSizeBytes / 1048576).toFixed(1)} MB`;
+      if (r.currentVersionReleaseDate)
+        metadata["updated"] = r.currentVersionReleaseDate;
       if (r.averageUserRating) metadata["userRating"] = r.averageUserRating;
       if (r.userRatingCount) metadata["ratingCount"] = r.userRatingCount;
       if (r.trackViewUrl) metadata["iTunesUrl"] = r.trackViewUrl;
       const images: string[] = [...upscaleITunesImage(r.artworkUrl100)];
       if (r.screenshotUrls) images.push(...r.screenshotUrls.slice(0, 5));
-      if (r.ipadScreenshotUrls) images.push(...r.ipadScreenshotUrls.slice(0, 3));
+      if (r.ipadScreenshotUrls)
+        images.push(...r.ipadScreenshotUrls.slice(0, 3));
       return {
         name: r.trackName!.trim(),
-        description: r.description?.trim() || parts.join(". ") + "." || "App from iTunes.",
+        description:
+          r.description?.trim() || parts.join(". ") + "." || "App from iTunes.",
         price: roundPrice(r.price ?? 0),
         category: (r.primaryGenreName ?? "apps").toLowerCase(),
         parentCategory: "Apps",
@@ -461,17 +592,29 @@ async function fetchOpenLibrary(count: number): Promise<NormalizedProduct[]> {
     .filter((d) => d.title?.trim().length)
     .map((d) => {
       const parts: string[] = [];
-      if (d.author_name?.length) parts.push(`By ${d.author_name.join(", ")}`);
-      if (d.first_publish_year) parts.push(`First published ${d.first_publish_year}`);
-      if (d.subject?.length) parts.push(`Subjects: ${d.subject.slice(0, 3).join(", ")}`);
+      if (d.author_name?.length)
+        parts.push(`By ${d.author_name.slice(0, 3).join(", ")}`);
+      if (d.first_publish_year)
+        parts.push(`First published ${d.first_publish_year}`);
+      const subjects = (d.subject ?? [])
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => s.length > 1);
+      const allowedSet = new Set(OPENLIBRARY_TERMS);
+      const category = subjects.find((s) => allowedSet.has(s)) ?? "books";
+      const displaySubjects = subjects.slice(0, 3);
+      if (displaySubjects.length)
+        parts.push(`Subjects: ${displaySubjects.join(", ")}`);
       const metadata: Record<string, unknown> = {};
-      if (d.author_name?.length) metadata["authors"] = d.author_name;
-      if (d.first_publish_year) metadata["firstPublished"] = d.first_publish_year;
-      if (d.subject?.length) metadata["subjects"] = d.subject.slice(0, 10);
+      if (d.author_name?.length)
+        metadata["authors"] = d.author_name.slice(0, 3);
+      if (d.first_publish_year)
+        metadata["firstPublished"] = d.first_publish_year;
+      if (subjects.length) metadata["subjects"] = subjects.slice(0, 5);
       if (d.isbn?.length) metadata["isbn"] = d.isbn.slice(0, 3);
       if (d.publisher?.length) metadata["publishers"] = d.publisher.slice(0, 3);
       if (d.language?.length) metadata["languages"] = d.language;
-      if (d.number_of_pages_median) metadata["pages"] = d.number_of_pages_median;
+      if (d.number_of_pages_median)
+        metadata["pages"] = d.number_of_pages_median;
       if (d.edition_count) metadata["editions"] = d.edition_count;
       if (d.ratings_average) metadata["avgRating"] = d.ratings_average;
       if (d.ratings_count) metadata["ratingCount"] = d.ratings_count;
@@ -482,9 +625,11 @@ async function fetchOpenLibrary(count: number): Promise<NormalizedProduct[]> {
       }
       return {
         name: d.title.trim(),
-        description: parts.length ? parts.join(". ") + "." : "Book from Open Library.",
+        description: parts.length
+          ? parts.join(". ") + "."
+          : "Book from Open Library.",
         price: randomPrice(8, 35),
-        category: (d.subject?.[0] ?? "books").toLowerCase(),
+        category,
         parentCategory: "Books",
         images,
         source: "openlibrary",
@@ -515,25 +660,90 @@ export class DataFeedService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly embeddingService: EmbeddingService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  private emit(event: MiningProgressEvent) {
+    this.eventEmitter.emit("mining.progress", event);
+  }
+
+  private async ensureSeedUsers(): Promise<string[]> {
+    const passwordHash = await bcrypt.hash("Password123!", 10);
+    const users = await Promise.all(
+      SEED_USERS.map((u) =>
+        this.prisma.user.upsert({
+          where: { email: u.email },
+          update: {},
+          create: {
+            email: u.email,
+            passwordHash,
+            name: u.name,
+          },
+        }),
+      ),
+    );
+    return users.map((u) => u.id);
+  }
+
+  async getStats() {
+    const [products, reviews, users, pendingReviews] = await Promise.all([
+      this.prisma.product.count(),
+      this.prisma.review.count(),
+      this.prisma.user.count(),
+      this.prisma.review.count({ where: { status: "PENDING" } }),
+    ]);
+    const byCategory = await this.prisma.product.groupBy({
+      by: ["category"],
+      _count: true,
+      orderBy: { _count: { category: "desc" } },
+    });
+    return { products, reviews, users, pendingReviews, byCategory };
+  }
+
   async seed(source: SourceId, count = 100): Promise<SourceResult[]> {
+    const seedUserIds = await this.ensureSeedUsers();
     const sources =
       source === "all"
         ? (Object.keys(SOURCE_FETCHERS) as Exclude<SourceId, "all">[])
         : [source];
 
+    this.emit({
+      step: "start",
+      message: `Starting data mining for ${sources.length} source${sources.length !== 1 ? "s" : ""} (${count} products each)`,
+      timestamp: new Date().toISOString(),
+      data: { sources, count },
+    });
+
     const results: SourceResult[] = [];
 
     for (const src of sources) {
+      this.emit({
+        step: "fetching",
+        source: src,
+        message: `Fetching from ${SOURCE_LABELS[src] ?? src}...`,
+        timestamp: new Date().toISOString(),
+      });
       try {
-        const result = await this.seedFromSource(src, count);
+        const result = await this.seedFromSource(src, count, seedUserIds);
         results.push(result);
       } catch (err) {
         this.logger.warn(`Source "${src}" failed: ${err}`);
+        this.emit({
+          step: "source_error",
+          source: src,
+          message: `Source ${src} failed: ${err}`,
+          timestamp: new Date().toISOString(),
+        });
         results.push({ source: src, fetched: 0, inserted: 0, skipped: 0 });
       }
     }
+
+    this.emit({
+      step: "complete",
+      message: `Mining complete. ${results.reduce((s, r) => s + r.inserted, 0)} products inserted across ${results.length} sources.`,
+      timestamp: new Date().toISOString(),
+      data: { results },
+    });
 
     return results;
   }
@@ -541,13 +751,34 @@ export class DataFeedService {
   private async seedFromSource(
     src: Exclude<SourceId, "all">,
     count: number,
+    seedUserIds: string[],
   ): Promise<SourceResult> {
     const fetcher = SOURCE_FETCHERS[src];
     this.logger.log(`Fetching from ${src}...`);
+    this.emit({
+      step: "fetching",
+      source: src,
+      message: `Connecting to ${SOURCE_LABELS[src] ?? src} API...`,
+      timestamp: new Date().toISOString(),
+    });
     const products = await fetcher(count);
     this.logger.log(`[${src}] Received ${products.length} products`);
+    this.emit({
+      step: "fetched",
+      source: src,
+      message: `Fetched ${products.length} products from ${SOURCE_LABELS[src] ?? src}`,
+      timestamp: new Date().toISOString(),
+      data: { count: products.length },
+    });
 
     if (products.length === 0) {
+      this.emit({
+        step: "source_done",
+        source: src,
+        message: `${SOURCE_LABELS[src] ?? src}: 0 fetched, 0 inserted, 0 skipped`,
+        timestamp: new Date().toISOString(),
+        data: { fetched: 0, inserted: 0, skipped: 0, reviews: 0 },
+      });
       return { source: src, fetched: 0, inserted: 0, skipped: 0 };
     }
 
@@ -559,13 +790,21 @@ export class DataFeedService {
     });
     const existingNames = new Set(existing.map((e) => e.name.toLowerCase()));
 
-    // Fetch existing users to assign reviews to
-    const users = await this.prisma.user.findMany({ select: { id: true } });
-    const userIds = users.map((u) => u.id);
+    // Only use the initial seeded users for generated reviews so real users'
+    // accounts are never associated with fabricated seed reviews.
+    const userIds = seedUserIds;
 
     let inserted = 0;
     let skipped = 0;
     let reviewsCreated = 0;
+
+    this.emit({
+      step: "inserting",
+      source: src,
+      message: `Inserting ${products.length} products into database...`,
+      timestamp: new Date().toISOString(),
+      data: { total: products.length, duplicates: existingNames.size },
+    });
 
     for (const p of products) {
       if (existingNames.has(p.name.toLowerCase())) {
@@ -589,6 +828,16 @@ export class DataFeedService {
         });
         existingNames.add(p.name.toLowerCase());
         inserted++;
+
+        if (inserted % 5 === 0 || inserted === products.length) {
+          this.emit({
+            step: "product_inserted",
+            source: src,
+            message: `[${src}] Inserted ${inserted}/${products.length} (${skipped} skipped)`,
+            timestamp: new Date().toISOString(),
+            data: { inserted, skipped, total: products.length, reviewsCreated },
+          });
+        }
 
         // Generate embedding for semantic search
         const embedding = await this.embeddingService.embedPassage(
@@ -620,6 +869,8 @@ export class DataFeedService {
                 title: r.title,
                 content: r.content,
                 images: [],
+                pros: [],
+                cons: [],
                 helpfulCount: Math.floor(Math.random() * 15),
                 notHelpfulCount: Math.floor(Math.random() * 5),
                 status: "APPROVED",
@@ -627,6 +878,26 @@ export class DataFeedService {
             });
             reviewsCreated++;
           }
+
+          // Recalculate product rating/count from actual reviews
+          const agg = await this.prisma.review.aggregate({
+            where: { productId: product.id, status: "APPROVED" },
+            _avg: { rating: true },
+            _count: { id: true },
+          });
+          await this.prisma.product.update({
+            where: { id: product.id },
+            data: {
+              averageRating: agg._avg.rating ?? 0,
+              reviewCount: agg._count.id,
+            },
+          });
+        } else {
+          // No reviews generated — reset to 0 to match actual DB state
+          await this.prisma.product.update({
+            where: { id: product.id },
+            data: { averageRating: 0, reviewCount: 0 },
+          });
         }
       } catch (err) {
         this.logger.warn(`[${src}] Failed to insert "${p.name}": ${err}`);
@@ -634,7 +905,9 @@ export class DataFeedService {
       }
     }
 
-    this.logger.log(`[${src}] Inserted ${inserted}, skipped ${skipped}, reviews ${reviewsCreated}`);
+    this.logger.log(
+      `[${src}] Inserted ${inserted}, skipped ${skipped}, reviews ${reviewsCreated}`,
+    );
     return { source: src, fetched: products.length, inserted, skipped };
   }
 }

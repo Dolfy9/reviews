@@ -20,8 +20,11 @@ export const reviewSchema = z.object({
   title: z.string(),
   content: z.string(),
   images: z.array(z.string()),
+  pros: z.array(z.string()),
+  cons: z.array(z.string()),
   helpfulCount: z.number().int(),
   notHelpfulCount: z.number().int(),
+  userVote: reviewVoteTypeSchema.nullable().optional(),
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -32,6 +35,8 @@ export const createReviewSchema = z.object({
   title: z.string().min(1).max(200),
   content: z.string().min(1).max(5000),
   images: z.array(z.string().url()).max(5).default([]),
+  pros: z.array(z.string().min(1).max(100)).max(10).default([]),
+  cons: z.array(z.string().min(1).max(100)).max(10).default([]),
 });
 
 export const updateReviewSchema = createReviewSchema.partial();

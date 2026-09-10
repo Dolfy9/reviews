@@ -19,6 +19,24 @@ export class SearchService {
     private readonly embeddingService: EmbeddingService,
   ) {}
 
+  private escapeLike(value: string): string {
+    return value
+      .replace(/\\/g, "\\\\")
+      .replace(/%/g, "\\%")
+      .replace(/_/g, "\\_");
+  }
+
+  private buildTsQuery(q: string): string {
+    const terms = q
+      .trim()
+      .split(/\s+/)
+      .map((term) => term.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase())
+      .filter((term) => term.length > 0)
+      .map((term) => `${term}:*`);
+    if (terms.length === 0) return "NO_MATCH";
+    return terms.join(" & ");
+  }
+
   async search(query: SearchQuery): Promise<
     | PaginatedResponse<ProductDto>
     | PaginatedResponse<ReviewDto>
@@ -94,13 +112,29 @@ export class SearchService {
     skip: number,
     limit: number,
   ): Promise<ProductDto[]> {
+    const tsQuery = this.buildTsQuery(q);
+    const escaped = this.escapeLike(q);
+    const exactPattern = escaped;
+    const prefixPattern = `${escaped}%`;
+    const likePattern = `%${escaped}%`;
+
     const rows = (await this.prisma.$queryRaw`
       SELECT "id", "name", "description", "price", "category", "subcategory", "images", "metadata",
              "averageRating", "reviewCount", "isActive", "createdAt", "updatedAt",
-             ts_rank_cd(to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')), plainto_tsquery('english', ${q})) AS rank
+             ts_rank_cd(to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')), to_tsquery('english', ${tsQuery})) * 10
+             + CASE WHEN "name" ILIKE ${exactPattern} THEN 100 ELSE 0 END
+             + CASE WHEN "name" ILIKE ${prefixPattern} THEN 50 ELSE 0 END
+             + CASE WHEN "name" ILIKE ${likePattern} THEN 20 ELSE 0 END
+             + CASE WHEN "description" ILIKE ${likePattern} THEN 5 ELSE 0 END
+             + CASE WHEN COALESCE("metadata"::text, '') ILIKE ${likePattern} THEN 1 ELSE 0 END AS rank
       FROM "Product"
       WHERE "isActive" = true
-        AND to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ plainto_tsquery('english', ${q})
+        AND (
+          to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ to_tsquery('english', ${tsQuery})
+          OR "name" ILIKE ${likePattern}
+          OR "description" ILIKE ${likePattern}
+          OR COALESCE("metadata"::text, '') ILIKE ${likePattern}
+        )
       ORDER BY rank DESC
       LIMIT ${limit} OFFSET ${skip}
     `) as Array<Record<string, unknown>>;
@@ -109,11 +143,20 @@ export class SearchService {
   }
 
   private async fulltextProductsCount(q: string): Promise<number> {
+    const tsQuery = this.buildTsQuery(q);
+    const escaped = this.escapeLike(q);
+    const likePattern = `%${escaped}%`;
+
     const result = (await this.prisma.$queryRaw`
       SELECT COUNT(*)::int AS count
       FROM "Product"
       WHERE "isActive" = true
-        AND to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ plainto_tsquery('english', ${q})
+        AND (
+          to_tsvector('english', "name" || ' ' || "description" || ' ' || COALESCE("metadata"::text, '')) @@ to_tsquery('english', ${tsQuery})
+          OR "name" ILIKE ${likePattern}
+          OR "description" ILIKE ${likePattern}
+          OR COALESCE("metadata"::text, '') ILIKE ${likePattern}
+        )
     `) as Array<{ count: number }>;
     return result[0]?.count ?? 0;
   }
@@ -167,10 +210,12 @@ export class SearchService {
       this.semanticProducts(q, 0, 100),
     ]);
 
-    const merged = this.reciprocalRankFusion<ProductDto>(
-      fulltext,
-      semantic,
-      (item) => item.id,
+    const merged = this.hybridFusion<ProductDto>(
+      [
+        { items: fulltext, weight: 50 },
+        { items: semantic, weight: 1 },
+      ],
+      (item: ProductDto) => item.id,
     );
 
     const total = merged.length;
@@ -183,15 +228,31 @@ export class SearchService {
     skip: number,
     limit: number,
   ): Promise<ReviewDto[]> {
+    const tsQuery = this.buildTsQuery(q);
+    const escaped = this.escapeLike(q);
+    const exactPattern = escaped;
+    const prefixPattern = `${escaped}%`;
+    const likePattern = `%${escaped}%`;
+
     const rows = (await this.prisma.$queryRaw`
       SELECT r."id", r."productId", r."userId", u.name AS "authorName", r."rating",
              r."title", r."content", r."images", r."helpfulCount", r."notHelpfulCount",
              r."status", r."createdAt", r."updatedAt",
-             ts_rank_cd(to_tsvector('english', r."title" || ' ' || r."content"), plainto_tsquery('english', ${q})) AS rank
+             ts_rank_cd(to_tsvector('english', r."title" || ' ' || r."content" || ' ' || COALESCE(u.name, '')), to_tsquery('english', ${tsQuery})) * 10
+             + CASE WHEN r."title" ILIKE ${exactPattern} THEN 100 ELSE 0 END
+             + CASE WHEN r."title" ILIKE ${prefixPattern} THEN 50 ELSE 0 END
+             + CASE WHEN r."title" ILIKE ${likePattern} THEN 20 ELSE 0 END
+             + CASE WHEN r."content" ILIKE ${likePattern} THEN 5 ELSE 0 END
+             + CASE WHEN u.name ILIKE ${likePattern} THEN 1 ELSE 0 END AS rank
       FROM "Review" r
       JOIN "User" u ON r."userId" = u.id
       WHERE r."status" = 'APPROVED'
-        AND to_tsvector('english', r."title" || ' ' || r."content") @@ plainto_tsquery('english', ${q})
+        AND (
+          to_tsvector('english', r."title" || ' ' || r."content" || ' ' || COALESCE(u.name, '')) @@ to_tsquery('english', ${tsQuery})
+          OR r."title" ILIKE ${likePattern}
+          OR r."content" ILIKE ${likePattern}
+          OR u.name ILIKE ${likePattern}
+        )
       ORDER BY rank DESC
       LIMIT ${limit} OFFSET ${skip}
     `) as Array<Record<string, unknown>>;
@@ -200,11 +261,21 @@ export class SearchService {
   }
 
   private async fulltextReviewsCount(q: string): Promise<number> {
+    const tsQuery = this.buildTsQuery(q);
+    const escaped = this.escapeLike(q);
+    const likePattern = `%${escaped}%`;
+
     const result = (await this.prisma.$queryRaw`
-      SELECT COUNT(*)::int AS count
-      FROM "Review"
-      WHERE "status" = 'APPROVED'
-        AND to_tsvector('english', "title" || ' ' || "content") @@ plainto_tsquery('english', ${q})
+      SELECT COUNT(DISTINCT r.id)::int AS count
+      FROM "Review" r
+      JOIN "User" u ON r."userId" = u.id
+      WHERE r."status" = 'APPROVED'
+        AND (
+          to_tsvector('english', r."title" || ' ' || r."content" || ' ' || COALESCE(u.name, '')) @@ to_tsquery('english', ${tsQuery})
+          OR r."title" ILIKE ${likePattern}
+          OR r."content" ILIKE ${likePattern}
+          OR u.name ILIKE ${likePattern}
+        )
     `) as Array<{ count: number }>;
     return result[0]?.count ?? 0;
   }
@@ -260,10 +331,12 @@ export class SearchService {
       this.semanticReviews(q, 0, 100),
     ]);
 
-    const merged = this.reciprocalRankFusion<ReviewDto>(
-      fulltext,
-      semantic,
-      (item) => item.id,
+    const merged = this.hybridFusion<ReviewDto>(
+      [
+        { items: fulltext, weight: 50 },
+        { items: semantic, weight: 1 },
+      ],
+      (item: ReviewDto) => item.id,
     );
 
     const total = merged.length;
@@ -309,25 +382,20 @@ export class SearchService {
     });
   }
 
-  private reciprocalRankFusion<T>(
-    fulltext: T[],
-    semantic: T[],
+  private hybridFusion<T>(
+    lists: { items: T[]; weight: number }[],
     idFn: (item: T) => string,
   ): T[] {
     const scores = new Map<string, number>();
     const items = new Map<string, T>();
 
-    fulltext.forEach((item, index) => {
-      const id = idFn(item);
-      items.set(id, item);
-      scores.set(id, (scores.get(id) ?? 0) + 1 / (RRF_K + index + 1));
-    });
-
-    semantic.forEach((item, index) => {
-      const id = idFn(item);
-      items.set(id, item);
-      scores.set(id, (scores.get(id) ?? 0) + 1 / (RRF_K + index + 1));
-    });
+    for (const { items: list, weight } of lists) {
+      list.forEach((item, index) => {
+        const id = idFn(item);
+        items.set(id, item);
+        scores.set(id, (scores.get(id) ?? 0) + weight / (RRF_K + index + 1));
+      });
+    }
 
     return Array.from(scores.entries())
       .sort((a, b) => b[1] - a[1])

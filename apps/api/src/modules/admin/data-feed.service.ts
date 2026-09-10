@@ -5,6 +5,51 @@ import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { EmbeddingService } from "../search/embedding.service";
 
+/* ---------- Fetch helpers ---------- */
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs = 10000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries = 3,
+  timeoutMs = 10000,
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, init, timeoutMs);
+      if (res.status >= 500 && res.status < 600 && attempt < retries - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * (attempt + 1)),
+        );
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * (attempt + 1)),
+        );
+      }
+    }
+  }
+  throw lastError;
+}
+
 export interface MiningProgressEvent {
   step:
     | "start"
@@ -317,7 +362,7 @@ async function fetchOpenFoodFacts(count: number): Promise<NormalizedProduct[]> {
   const pageSize = Math.min(count, 100);
   const page = randomPage(20);
   const url = `https://world.openfoodfacts.org/api/v2/search?fields=product_name,brands,categories,image_url,image_front_url,image_nutrition_url,image_ingredients_url,quantity,nutrition_grades,ingredients_text,allergens,nutriments,countries,stores,labels,code&page_size=${pageSize}&page=${page}`;
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       "User-Agent": "ReviewHub/1.0 (product reviews platform; data feed)",
       Accept: "application/json",
@@ -928,6 +973,18 @@ export class DataFeedService {
     this.logger.log(
       `[${src}] Inserted ${inserted}, skipped ${skipped}, reviews ${reviewsCreated}`,
     );
+    this.emit({
+      step: "source_done",
+      source: src,
+      message: `${SOURCE_LABELS[src] ?? src}: ${products.length} fetched, ${inserted} inserted, ${skipped} skipped`,
+      timestamp: new Date().toISOString(),
+      data: {
+        fetched: products.length,
+        inserted,
+        skipped,
+        reviews: reviewsCreated,
+      },
+    });
     return { source: src, fetched: products.length, inserted, skipped };
   }
 }

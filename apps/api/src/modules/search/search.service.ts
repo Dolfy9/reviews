@@ -162,8 +162,10 @@ export class SearchService {
     limit: number,
     page: number,
   ): Promise<PaginatedResponse<ProductDto>> {
-    const fulltext = await this.fulltextProducts(q, 0, 100);
-    const semantic = await this.semanticProducts(q, 0, 100);
+    const [fulltext, semantic] = await Promise.all([
+      this.fulltextProducts(q, 0, 100),
+      this.semanticProducts(q, 0, 100),
+    ]);
 
     const merged = this.reciprocalRankFusion<ProductDto>(
       fulltext,
@@ -253,8 +255,10 @@ export class SearchService {
     limit: number,
     page: number,
   ): Promise<PaginatedResponse<ReviewDto>> {
-    const fulltext = await this.fulltextReviews(q, 0, 100);
-    const semantic = await this.semanticReviews(q, 0, 100);
+    const [fulltext, semantic] = await Promise.all([
+      this.fulltextReviews(q, 0, 100),
+      this.semanticReviews(q, 0, 100),
+    ]);
 
     const merged = this.reciprocalRankFusion<ReviewDto>(
       fulltext,

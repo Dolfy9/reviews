@@ -160,6 +160,9 @@ export class ReviewsService {
     if (!review) {
       throw new NotFoundException("Review not found");
     }
+    if (review.userId === userId) {
+      throw new ForbiddenException("You cannot vote on your own review");
+    }
 
     const existing = await this.reviewsRepository.findVote(reviewId, userId);
     let helpfulDelta = 0;

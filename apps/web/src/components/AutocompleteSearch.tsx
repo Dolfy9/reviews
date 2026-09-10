@@ -36,7 +36,7 @@ export function AutocompleteSearch({
     queryFn: () =>
       searchApi.searchProducts({
         q: debounced,
-        mode: "hybrid",
+        mode: "fulltext",
         page: 1,
         limit: 6,
       }),

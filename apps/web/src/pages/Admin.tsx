@@ -180,6 +180,7 @@ export default function Admin() {
               updated.fetched = event.data.fetched as number;
               updated.inserted = event.data.inserted as number;
               updated.skipped = event.data.skipped as number;
+              updated.total = updated.fetched;
               updated.processed = updated.total;
             }
             if (event.step === "source_error") updated.status = "error";

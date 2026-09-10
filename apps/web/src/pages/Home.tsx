@@ -121,7 +121,7 @@ export default function Home() {
       {!searchQuery &&
         selectedCategories.length === 0 &&
         !selectedSubcategory && (
-          <section className="animate-fade-in relative overflow-hidden rounded-2xl border border-sky-100/50 bg-gradient-to-br from-sky-50 via-slate-50 to-cyan-50 px-6 py-8 dark:border-sky-900/20 dark:from-sky-950/20 dark:via-[#0c1929] dark:to-cyan-950/20">
+          <section className="animate-fade-in relative rounded-2xl border border-sky-100/50 bg-gradient-to-br from-sky-50 via-slate-50 to-cyan-50 px-6 py-8 dark:border-sky-900/20 dark:from-sky-950/20 dark:via-[#0c1929] dark:to-cyan-950/20">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute -top-16 left-1/2 h-32 w-80 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
             </div>

@@ -5,6 +5,7 @@ import {
   ReviewDto,
   ReviewListQuery,
   PaginatedResponse,
+  UpdateReviewInput,
 } from "@product-reviews/shared";
 
 export const reviewsApi = {
@@ -19,6 +20,10 @@ export const reviewsApi = {
     api
       .post<ReviewDto>(`/reviews/products/${productId}/reviews`, data)
       .then((res) => res.data),
+  update: (reviewId: string, data: UpdateReviewInput) =>
+    api.patch<ReviewDto>(`/reviews/${reviewId}`, data).then((res) => res.data),
+  delete: (reviewId: string) =>
+    api.delete(`/reviews/${reviewId}`).then((res) => res.data),
   vote: (reviewId: string, data: CreateReviewVoteInput) =>
     api
       .post<ReviewDto>(`/reviews/${reviewId}/vote`, data)

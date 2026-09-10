@@ -13,17 +13,29 @@ import {
   AlertCircle,
   Plus,
   Minus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 interface ReviewCardProps {
   review: ReviewDto;
   productId: string;
+  onEdit?: (review: ReviewDto) => void;
+  onDelete?: (reviewId: string) => void;
 }
 
-export function ReviewCard({ review, productId }: ReviewCardProps) {
+export function ReviewCard({
+  review,
+  productId,
+  onEdit,
+  onDelete,
+}: ReviewCardProps) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const { toast } = useToast();
+
+  const isOwn = review.userId === user?.id;
+  const isAdmin = user?.role === "ADMIN";
 
   const voteMutation = useMutation({
     mutationFn: (type: VoteType) => reviewsApi.vote(review.id, { type }),
@@ -64,6 +76,26 @@ export function ReviewCard({ review, productId }: ReviewCardProps) {
           <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
             {review.authorName ?? "Anonymous"}
           </span>
+          {isOwn && onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(review)}
+              className="ml-1 rounded-lg p-1.5 text-slate-400 transition hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
+              aria-label="Edit review"
+            >
+              <Pencil size={16} />
+            </button>
+          )}
+          {(isOwn || isAdmin) && onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(review.id)}
+              className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
+              aria-label="Delete review"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -123,7 +155,7 @@ export function ReviewCard({ review, productId }: ReviewCardProps) {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        {user ? (
+        {user && !isOwn ? (
           <>
             <button
               type="button"
@@ -174,6 +206,10 @@ export function ReviewCard({ review, productId }: ReviewCardProps) {
               </span>
             )}
           </>
+        ) : user ? (
+          <span className="text-xs text-slate-400 dark:text-slate-600">
+            You cannot vote on your own review
+          </span>
         ) : (
           <span className="text-xs text-slate-400 dark:text-slate-600">
             {review.helpfulCount} found this helpful

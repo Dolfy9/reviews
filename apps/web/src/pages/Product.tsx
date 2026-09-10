@@ -2,7 +2,12 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createReviewSchema, CreateReviewInput } from "@product-reviews/shared";
+import {
+  createReviewSchema,
+  CreateReviewInput,
+  UpdateReviewInput,
+  ReviewDto,
+} from "@product-reviews/shared";
 import { productsApi } from "../api/products";
 import { reviewsApi } from "../api/reviews";
 import { ReviewCard } from "../components/ReviewCard";
@@ -32,6 +37,8 @@ import {
   ChevronRight,
   Info,
   MessageSquare,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 
@@ -44,11 +51,13 @@ export default function Product() {
   const [imgErrors, setImgErrors] = useState<Set<number>>(new Set());
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<ReviewDto | null>(null);
 
   useEffect(() => {
     setImgErrors(new Set());
     setMainImageError(false);
     setSelectedImage(0);
+    setEditingReview(null);
   }, [id]);
 
   const openLightbox = useCallback(() => setLightboxOpen(true), []);
@@ -99,6 +108,28 @@ export default function Product() {
     },
   });
 
+  useEffect(() => {
+    if (editingReview) {
+      reset({
+        rating: editingReview.rating,
+        title: editingReview.title,
+        content: editingReview.content,
+        images: editingReview.images,
+        pros: editingReview.pros,
+        cons: editingReview.cons,
+      });
+    } else {
+      reset({
+        rating: 5,
+        title: "",
+        content: "",
+        images: [],
+        pros: [],
+        cons: [],
+      });
+    }
+  }, [editingReview, reset]);
+
   const createReview = useMutation({
     mutationFn: (data: CreateReviewInput) => reviewsApi.create(id ?? "", data),
     onSuccess: async () => {
@@ -113,8 +144,52 @@ export default function Product() {
     },
   });
 
+  const updateReview = useMutation({
+    mutationFn: ({
+      reviewId,
+      data,
+    }: {
+      reviewId: string;
+      data: UpdateReviewInput;
+    }) => reviewsApi.update(reviewId, data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["reviews", id] });
+      await queryClient.invalidateQueries({ queryKey: ["product", id] });
+      await queryClient.invalidateQueries({ queryKey: ["my-review", id] });
+      setEditingReview(null);
+      reset();
+      toast("Review updated!", "success");
+    },
+    onError: (err) => {
+      toast(friendlyErrorMessage(err), "error");
+    },
+  });
+
+  const deleteReview = useMutation({
+    mutationFn: (reviewId: string) => reviewsApi.delete(reviewId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["reviews", id] });
+      await queryClient.invalidateQueries({ queryKey: ["product", id] });
+      await queryClient.invalidateQueries({ queryKey: ["my-review", id] });
+      setEditingReview(null);
+      reset();
+      toast("Review deleted", "success");
+    },
+    onError: (err) => {
+      toast(friendlyErrorMessage(err), "error");
+    },
+  });
+
+  const handleDelete = (reviewId: string) => {
+    deleteReview.mutate(reviewId);
+  };
+
   const onSubmit = (data: CreateReviewInput) => {
-    createReview.mutate(data);
+    if (editingReview) {
+      updateReview.mutate({ reviewId: editingReview.id, data });
+    } else {
+      createReview.mutate(data);
+    }
   };
 
   if (productQuery.isLoading) return <DetailSkeleton />;
@@ -130,6 +205,7 @@ export default function Product() {
 
   const product = productQuery.data;
   const hasImages = product.images.length > 0;
+  const mainImageSrc = hasImages ? product.images[selectedImage] : undefined;
   const metadataEntries = product.metadata
     ? Object.entries(product.metadata).filter(([, v]) => {
         if (v === null || v === undefined) return false;
@@ -154,14 +230,14 @@ export default function Product() {
         <div className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-sky-500/8 blur-3xl" />
         <div className="relative flex flex-col gap-8 sm:flex-row">
           {/* Image gallery - e-shop style */}
-          {hasImages && !mainImageError ? (
+          {hasImages && mainImageSrc && !mainImageError ? (
             <div className="flex flex-col gap-3">
               <button
                 onClick={openLightbox}
                 className="group/gallery relative h-80 w-80 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50"
               >
                 <img
-                  src={product.images[selectedImage]}
+                  src={mainImageSrc}
                   alt={product.name}
                   onError={() => setMainImageError(true)}
                   className="h-full w-full object-contain transition-transform duration-300 group-hover/gallery:scale-105"
@@ -271,7 +347,7 @@ export default function Product() {
       </div>
 
       {/* Lightbox */}
-      {lightboxOpen && hasImages && !mainImageError && (
+      {lightboxOpen && mainImageSrc && !mainImageError && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={closeLightbox}
@@ -305,7 +381,7 @@ export default function Product() {
             </button>
           )}
           <img
-            src={product.images[selectedImage]}
+            src={mainImageSrc}
             alt={product.name}
             onClick={(e) => e.stopPropagation()}
             className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
@@ -325,30 +401,66 @@ export default function Product() {
             <AlertCircle size={18} />
             Could not check your review status. Please refresh the page.
           </div>
-        ) : myReviewQuery.data?.review ? (
-          <div className="card animate-slide-up flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_4px_14px_rgba(16,185,129,0.25)]">
-              <MessageSquare className="text-white" size={24} />
+        ) : myReviewQuery.data?.review && !editingReview ? (
+          <div className="card animate-slide-up flex items-center justify-between gap-4 p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_4px_14px_rgba(16,185,129,0.25)]">
+                <MessageSquare className="text-white" size={24} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold tracking-tight">
+                  You've already reviewed this product
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                  You rated it {myReviewQuery.data.review.rating}/5 stars. You
+                  can only write one review per product.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold tracking-tight">
-                You've already reviewed this product
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                You rated it {myReviewQuery.data.review.rating}/5 stars. You can
-                only write one review per product.
-              </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingReview(myReviewQuery.data.review!)}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-sky-600 transition hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/30"
+              >
+                <Pencil size={14} />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(myReviewQuery.data.review!.id)}
+                disabled={deleteReview.isPending}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
+              >
+                {deleteReview.isPending ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                Delete
+              </button>
             </div>
           </div>
         ) : (
           <div className="card animate-slide-up p-8">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500">
-                <PenSquare className="text-white" size={18} />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500">
+                  <PenSquare className="text-white" size={18} />
+                </div>
+                <h2 className="text-lg font-bold tracking-tight">
+                  {editingReview ? "Edit your review" : "Share your experience"}
+                </h2>
               </div>
-              <h2 className="text-lg font-bold tracking-tight">
-                Share your experience
-              </h2>
+              {editingReview && (
+                <button
+                  type="button"
+                  onClick={() => setEditingReview(null)}
+                  className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
             {createReview.isError && (
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
@@ -446,13 +558,20 @@ export default function Product() {
               </div>
               <button
                 type="submit"
-                disabled={isSubmitting || createReview.isPending}
+                disabled={
+                  isSubmitting ||
+                  createReview.isPending ||
+                  updateReview.isPending ||
+                  deleteReview.isPending
+                }
                 className="btn-primary"
               >
-                {(isSubmitting || createReview.isPending) && (
+                {(isSubmitting ||
+                  createReview.isPending ||
+                  updateReview.isPending) && (
                   <Loader2 className="animate-spin" size={18} />
                 )}
-                Submit review
+                {editingReview ? "Save changes" : "Submit review"}
               </button>
             </form>
           </div>
@@ -500,7 +619,13 @@ export default function Product() {
           </div>
         ) : reviewsQuery.data?.data.length ? (
           reviewsQuery.data.data.map((review) => (
-            <ReviewCard key={review.id} review={review} productId={id ?? ""} />
+            <ReviewCard
+              key={review.id}
+              review={review}
+              productId={id ?? ""}
+              onEdit={setEditingReview}
+              onDelete={handleDelete}
+            />
           ))
         ) : (
           <EmptyState

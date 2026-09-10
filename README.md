@@ -1,22 +1,67 @@
 # Product Reviews Platform
 
-A full-stack, production-ready product review system built with TypeScript, NestJS, React, Vite, PostgreSQL + pgvector, Redis, MinIO, and Docker. The platform supports public catalog browsing, full-text and semantic search, user-generated reviews with image uploads, admin moderation, and an automated data-mining pipeline for seeding products from public APIs.
+A full-stack product review system built with TypeScript, NestJS, React, Vite, PostgreSQL + pgvector, Redis, MinIO, and Docker. The platform supports public catalog browsing, full-text and semantic search, user-generated reviews with image uploads, admin moderation, and an automated data-mining pipeline for seeding products from public APIs.
 
 ## Table of contents
 
+- [Quick start](#quick-start)
 - [Overview](#overview)
 - [Features](#features)
 - [Tech stack & rationale](#tech-stack--rationale)
 - [Architecture](#architecture)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
-- [Production deployment](#production-deployment)
+- [Production](#production)
 - [Environment variables](#environment-variables)
 - [Testing](#testing)
 - [API documentation](#api-documentation)
 - [Data seeding & mining](#data-seeding--mining)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
+
+## Quick start
+
+1. **Prerequisites**: Node.js 22+, Docker Desktop or Docker Engine + Compose v2, pnpm (via `corepack enable`), Git.
+2. **Configure environment**: create a `.env` file at the repository root. See [Environment variables](#environment-variables) for the required variables.
+3. **Install dependencies**:
+
+   ```bash
+   corepack enable
+   corepack pnpm install
+   ```
+
+4. **Start the development stack**:
+
+   ```bash
+   corepack pnpm docker:dev
+   ```
+
+   On Windows without a global pnpm installation:
+
+   ```powershell
+   .\scripts\dev.ps1
+   ```
+
+5. **Run migrations and seed data** (in another terminal):
+
+   ```bash
+   corepack pnpm db:migrate
+   corepack pnpm db:seed
+   ```
+
+6. **Open the services**:
+   - Web: `http://localhost:3000`
+   - API: `http://localhost:3001`
+   - Swagger UI: `http://localhost:3001/api/docs`
+   - MinIO console: `http://localhost:9001` (default `minioadmin` / `minioadmin`)
+
+7. **Seed credentials**:
+
+   | Email               | Password       | Role  |
+   | ------------------- | -------------- | ----- |
+   | `admin@example.com` | `Password123!` | Admin |
+   | `alice@example.com` | `Password123!` | User  |
+   | `bob@example.com`   | `Password123!` | User  |
 
 ## Overview
 
@@ -212,7 +257,9 @@ corepack pnpm db:seed
 | `alice@example.com` | `Password123!` | User  |
 | `bob@example.com`   | `Password123!` | User  |
 
-## Production deployment
+## Production
+
+The app can be run in both development and production modes. To run it in production mode:
 
 1. Generate a strong `JWT_SECRET` and fill out all required environment variables.
 2. Set `NODE_ENV=production`.

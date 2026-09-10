@@ -5,6 +5,8 @@
   "description": "Full-stack product review system with TypeScript, NestJS, React, Vite, PostgreSQL+pgvector, and Docker.",
   "packageManager": "pnpm@11.5.3",
   "scripts": {
+    "dev": "node scripts/start.mjs dev",
+    "prod": "node scripts/start.mjs prod",
     "docker:dev": "docker compose -f docker/docker-compose.dev.yml --env-file .env up --build",
     "docker:dev:detach": "docker compose -f docker/docker-compose.dev.yml --env-file .env up --build -d",
     "docker:prod": "docker compose -f docker/docker-compose.prod.yml --env-file .env up --build -d",

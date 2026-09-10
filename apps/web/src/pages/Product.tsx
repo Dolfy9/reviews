@@ -312,16 +312,13 @@ export default function Product() {
                   <Info size={14} />
                   Product Details
                 </div>
-                <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                   {metadataEntries.map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex justify-between gap-2 text-sm"
-                    >
+                    <div key={key} className="flex flex-col gap-0.5 text-sm">
                       <dt className="font-medium capitalize text-slate-500 dark:text-slate-400">
                         {key.replace(/([A-Z])/g, " $1").trim()}
                       </dt>
-                      <dd className="truncate text-slate-700 dark:text-slate-300">
+                      <dd className="break-words leading-relaxed text-slate-700 dark:text-slate-300">
                         {Array.isArray(value)
                           ? value.join(", ")
                           : String(value)}

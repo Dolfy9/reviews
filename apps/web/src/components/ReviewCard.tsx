@@ -206,10 +206,6 @@ export function ReviewCard({
               </span>
             )}
           </>
-        ) : user ? (
-          <span className="text-xs text-slate-400 dark:text-slate-600">
-            You cannot vote on your own review
-          </span>
         ) : (
           <span className="text-xs text-slate-400 dark:text-slate-600">
             {review.helpfulCount} found this helpful

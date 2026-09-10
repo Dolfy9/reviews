@@ -22,7 +22,13 @@ A full-stack product review system built with TypeScript, NestJS, React, Vite, P
 ## Quick start
 
 1. **Prerequisites**: Node.js 22+, Docker Desktop or Docker Engine + Compose v2, Git.
-2. **Clone the repo** and enter the directory.
+2. **Clone the repo** (uses the `main` branch) and enter the directory:
+
+   ```bash
+   git clone -b main https://github.com/Dolfy9/reviews.git
+   cd reviews
+   ```
+
 3. **Start in development** — installs dependencies, creates `.env` if needed, starts Docker, runs migrations, and seeds demo data:
 
    ```bash

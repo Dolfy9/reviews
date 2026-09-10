@@ -30,15 +30,57 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  @ApiOperation({ summary: "List products with optional search, filter, and pagination" })
-  @ApiQuery({ name: "page", required: false, type: Number, description: "Page number (default 1)" })
-  @ApiQuery({ name: "limit", required: false, type: Number, description: "Items per page (default 20, max 100)" })
-  @ApiQuery({ name: "sort", required: false, enum: ["newest", "rating", "reviews", "price_asc", "price_desc"], description: "Sort order (default newest)" })
-  @ApiQuery({ name: "category", required: false, type: String, description: "Filter by single category" })
-  @ApiQuery({ name: "categories", required: false, type: [String], description: "Filter by multiple categories (repeatable)" })
-  @ApiQuery({ name: "subcategory", required: false, type: String, description: "Filter by subcategory" })
-  @ApiQuery({ name: "minRating", required: false, type: Number, description: "Minimum average rating (0-5)" })
-  @ApiQuery({ name: "search", required: false, type: String, description: "Search term for name and description" })
+  @ApiOperation({
+    summary: "List products with optional search, filter, and pagination",
+  })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number (default 1)",
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Items per page (default 20, max 100)",
+  })
+  @ApiQuery({
+    name: "sort",
+    required: false,
+    enum: ["newest", "rating", "reviews", "price_asc", "price_desc"],
+    description: "Sort order (default newest)",
+  })
+  @ApiQuery({
+    name: "category",
+    required: false,
+    type: String,
+    description: "Filter by single category",
+  })
+  @ApiQuery({
+    name: "categories",
+    required: false,
+    type: [String],
+    description: "Filter by multiple categories (repeatable)",
+  })
+  @ApiQuery({
+    name: "subcategory",
+    required: false,
+    type: String,
+    description: "Filter by subcategory",
+  })
+  @ApiQuery({
+    name: "minRating",
+    required: false,
+    type: Number,
+    description: "Minimum average rating (0-5)",
+  })
+  @ApiQuery({
+    name: "search",
+    required: false,
+    type: String,
+    description: "Search term for name and description",
+  })
   @ApiResponse({ status: 200, description: "Paginated list of products." })
   findAll(@Query() query: ProductListQueryDto) {
     return this.productsService.findAll(query);
@@ -52,8 +94,15 @@ export class ProductsController {
   }
 
   @Get("subcategories")
-  @ApiOperation({ summary: "Get distinct subcategories for a given parent category" })
-  @ApiQuery({ name: "category", required: true, type: String, description: "Parent category" })
+  @ApiOperation({
+    summary: "Get distinct subcategories for a given parent category",
+  })
+  @ApiQuery({
+    name: "category",
+    required: true,
+    type: String,
+    description: "Parent category",
+  })
   @ApiResponse({ status: 200, description: "List of subcategories." })
   getSubcategories(@Query("category") category: string) {
     return this.productsService.getSubcategories(category);
@@ -62,10 +111,18 @@ export class ProductsController {
   @Get(":id/similar")
   @ApiOperation({ summary: "Get similar products by category" })
   @ApiParam({ name: "id", type: String, description: "Product ID" })
-  @ApiQuery({ name: "limit", required: false, type: Number, description: "Max results (default 6)" })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Max results (default 6)",
+  })
   @ApiResponse({ status: 200, description: "List of similar products." })
   findSimilar(@Param("id") id: string, @Query("limit") limit?: string) {
-    return this.productsService.findSimilar(id, limit ? parseInt(limit, 10) : 6);
+    return this.productsService.findSimilar(
+      id,
+      limit ? parseInt(limit, 10) : 6,
+    );
   }
 
   @Get(":id")
@@ -84,7 +141,10 @@ export class ProductsController {
   @ApiOperation({ summary: "Create a new product (admin only)" })
   @ApiResponse({ status: 201, description: "Product created." })
   @ApiResponse({ status: 401, description: "Not authenticated." })
-  @ApiResponse({ status: 403, description: "Not authorized (admin role required)." })
+  @ApiResponse({
+    status: 403,
+    description: "Not authorized (admin role required).",
+  })
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
@@ -97,7 +157,10 @@ export class ProductsController {
   @ApiParam({ name: "id", type: String, description: "Product ID" })
   @ApiResponse({ status: 200, description: "Product updated." })
   @ApiResponse({ status: 404, description: "Product not found." })
-  @ApiResponse({ status: 403, description: "Not authorized (admin role required)." })
+  @ApiResponse({
+    status: 403,
+    description: "Not authorized (admin role required).",
+  })
   update(@Param("id") id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
   }
@@ -110,7 +173,10 @@ export class ProductsController {
   @ApiParam({ name: "id", type: String, description: "Product ID" })
   @ApiResponse({ status: 200, description: "Product deleted." })
   @ApiResponse({ status: 404, description: "Product not found." })
-  @ApiResponse({ status: 403, description: "Not authorized (admin role required)." })
+  @ApiResponse({
+    status: 403,
+    description: "Not authorized (admin role required).",
+  })
   remove(@Param("id") id: string) {
     return this.productsService.delete(id);
   }

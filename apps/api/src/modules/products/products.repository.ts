@@ -10,7 +10,9 @@ export class ProductsRepository {
     skip: number,
     take: number,
     filters: Prisma.ProductWhereInput,
-    orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[],
+    orderBy:
+      | Prisma.ProductOrderByWithRelationInput
+      | Prisma.ProductOrderByWithRelationInput[],
   ) {
     return this.prisma.product.findMany({
       where: filters,
@@ -55,12 +57,32 @@ export class ProductsRepository {
     });
   }
 
-  findDistinctSubcategories(category: string) {
-    return this.prisma.product.findMany({
-      where: { isActive: true, category },
-      select: { subcategory: true },
-      distinct: ["subcategory"],
-      orderBy: { subcategory: "asc" },
+  async findDistinctSubcategories(category: string) {
+    const rows = await this.prisma.product.groupBy({
+      by: ["subcategory"],
+      where: {
+        isActive: true,
+        category,
+        subcategory: { not: null },
+      },
+      _count: { subcategory: true },
+      orderBy: { _count: { subcategory: "desc" } },
+      take: 50,
     });
+    return rows
+      .map((r) => r.subcategory)
+      .filter(
+        (s): s is string =>
+          s !== null &&
+          s.length >= 2 &&
+          s.length <= 25 &&
+          s.split(/\s+/).length <= 3 &&
+          !/[=:,;\d()[\]{}]/.test(s) &&
+          !s.startsWith("nyt:") &&
+          !s.startsWith("serie:") &&
+          !s.startsWith("fr:") &&
+          !s.startsWith("collectionid:"),
+      )
+      .slice(0, 12);
   }
 }

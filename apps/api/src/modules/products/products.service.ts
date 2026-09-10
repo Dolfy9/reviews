@@ -18,7 +18,16 @@ export class ProductsService {
   ) {}
 
   async findAll(query: ProductListQuery) {
-    const { page, limit, category, categories, subcategory, minRating, search, sort } = query;
+    const {
+      page,
+      limit,
+      category,
+      categories,
+      subcategory,
+      minRating,
+      search,
+      sort,
+    } = query;
     const skip = (page - 1) * limit;
 
     const categoryList = categories
@@ -31,7 +40,8 @@ export class ProductsService {
 
     const filters: Prisma.ProductWhereInput = {
       isActive: true,
-      ...(categoryList && categoryList.length > 0 && { category: { in: categoryList } }),
+      ...(categoryList &&
+        categoryList.length > 0 && { category: { in: categoryList } }),
       ...(subcategory && { subcategory }),
       ...(minRating !== undefined && { averageRating: { gte: minRating } }),
       ...(search && {
@@ -117,10 +127,7 @@ export class ProductsService {
   }
 
   async getSubcategories(category: string): Promise<string[]> {
-    const rows = await this.productsRepository.findDistinctSubcategories(category);
-    return rows
-      .map((r) => r.subcategory)
-      .filter((s): s is string => s !== null);
+    return this.productsRepository.findDistinctSubcategories(category);
   }
 
   async findSimilar(id: string, limit = 6) {

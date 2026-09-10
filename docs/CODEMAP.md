@@ -2,7 +2,7 @@
 
 This file is a semantic mirror of the source tree. Each entry describes what a file or directory is responsible for. Run `pnpm codemap` to regenerate the skeleton after structural changes.
 
-> Last updated: 2026-09-10T09:55:19.008Z
+> Last updated: 2026-09-10T10:08:04.854Z
 
 - `AGENTS.md`
 - **`apps/`**
@@ -201,5 +201,6 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
   - `dev.sh`
   - `prod.ps1`
   - `prod.sh`
+  - `start.mjs`
   - `update-codemap.ts`
 - `turbo.json`

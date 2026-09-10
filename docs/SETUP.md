@@ -10,33 +10,32 @@
 ## First run
 
 1. Clone the repo and enter the directory.
-2. Copy the environment file:
+2. Run the unified start command:
 
    ```bash
-   cp .env.example .env
+   npm run dev
    ```
 
-3. Install dependencies:
+   `npm run dev` will:
+   1. Enable corepack and install dependencies.
+   2. Create a `.env` file from `.env.example` if one does not exist.
+   3. Start the Docker development stack.
+   4. Wait for the API to be healthy.
+   5. Run Prisma migrations.
+   6. Seed demo data (skipped if data already exists).
+   7. Stream container logs.
 
-   ```bash
-   corepack enable
-   corepack pnpm install
-   ```
+   The first run will pull/build Docker images and download the ONNX model. On subsequent starts, the existing database volume is reused and seeding is skipped.
 
-4. Start the dev stack:
+3. Open the services:
+   - Web: `http://localhost:3000`
+   - API: `http://localhost:3001`
+   - Swagger: `http://localhost:3001/api/docs`
+   - MinIO console: `http://localhost:9001`
+   - PostgreSQL: `localhost:5432`
+   - Redis: `localhost:6379`
 
-   ```bash
-   corepack pnpm docker:dev
-   ```
-
-5. In another terminal, run migrations and seed:
-
-   ```bash
-   corepack pnpm db:migrate
-   corepack pnpm db:seed
-   ```
-
-6. Seed credentials:
+4. Seed credentials:
 
    | Email               | Password       | Role  |
    | ------------------- | -------------- | ----- |
@@ -44,21 +43,25 @@
    | `alice@example.com` | `Password123!` | User  |
    | `bob@example.com`   | `Password123!` | User  |
 
-## Services
+## Production
 
-- Web: `http://localhost:3000`
-- API: `http://localhost:3001`
-- Swagger: `http://localhost:3001/api/docs`
-- MinIO console: `http://localhost:9001`
-- PostgreSQL: `localhost:5432`
-- Redis: `localhost:6379`
+To run in production mode with the same defaults:
 
-## Useful commands
+```bash
+npm run prod
+```
 
-- Stop: `corepack pnpm docker:down`
-- Reset database: `corepack pnpm db:reset`
-- View logs: `corepack pnpm docker:logs`
-- Open Prisma Studio: `corepack pnpm db:studio`
+`npm run prod` will install dependencies, create `.env` if needed, build the production Docker images, start the stack, run migrations, and seed demo data if the database is empty.
+
+For a real deployment, review `docker/docker-compose.prod.yml`, generate a strong `JWT_SECRET`, and configure `MINIO_*` values to point to your S3-compatible provider if you are not using the bundled MinIO container.
+
+### Re-seeding
+
+If you need to wipe data and re-seed, set `RESET=true`:
+
+```bash
+docker compose -f docker/docker-compose.dev.yml exec api RESET=true pnpm --filter @product-reviews/api exec tsx prisma/seed.ts
+```
 
 ## Environment variables
 
@@ -107,6 +110,17 @@ WEB_PORT=3000
 API_PORT=3001
 ```
 
+## Useful commands
+
+- `npm run dev` — start the development stack
+- `npm run prod` — start the production stack
+- `corepack pnpm docker:down` — stop all Docker services
+- `corepack pnpm db:migrate` — run Prisma migrations in the dev `api` container
+- `corepack pnpm db:seed` — run seed data in the dev `api` container
+- `corepack pnpm db:studio` — open Prisma Studio
+- `corepack pnpm docker:logs` — follow Docker dev logs
+- `corepack pnpm db:reset` — stop and remove volumes, then restart dev and re-seed
+
 ## Testing
 
 ### Unit / integration
@@ -128,7 +142,7 @@ E2E tests run with Playwright against the production Docker stack.
 2. Start the production stack:
 
    ```bash
-   corepack pnpm docker:prod
+   npm run prod
    ```
 
 3. Run the E2E suite:
@@ -141,26 +155,6 @@ E2E tests run with Playwright against the production Docker stack.
 
 - PowerShell scripts are provided in `scripts/`.
 - File watching in Docker Desktop for Windows may require `CHOKIDAR_USEPOLLING=true`, which is already set in `docker-compose.dev.yml`.
-
-## Production
-
-1. Generate a strong `JWT_SECRET` and fill out all environment variables.
-2. Set `NODE_ENV=production`.
-3. Configure real S3-compatible storage if needed by pointing `MINIO_*` values at your provider.
-4. Review `docker/docker-compose.prod.yml` and adjust ports, volumes, or replicas for your environment.
-5. Start the stack:
-
-   ```bash
-   corepack pnpm docker:prod
-   ```
-
-6. Run migrations against the running API container:
-
-   ```bash
-   docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @product-reviews/api exec prisma migrate deploy
-   ```
-
-The production web container is an Nginx server that serves the built React SPA and proxies `/api/*` requests to the API container (`apps/web/nginx.conf`).
 
 ## Troubleshooting
 

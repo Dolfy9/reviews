@@ -21,47 +21,35 @@ A full-stack product review system built with TypeScript, NestJS, React, Vite, P
 
 ## Quick start
 
-1. **Prerequisites**: Node.js 22+, Docker Desktop or Docker Engine + Compose v2, pnpm (via `corepack enable`), Git.
-2. **Configure environment**: create a `.env` file at the repository root. See [Environment variables](#environment-variables) for the required variables.
-3. **Install dependencies**:
+1. **Prerequisites**: Node.js 22+, Docker Desktop or Docker Engine + Compose v2, Git.
+2. **Clone the repo** and enter the directory.
+3. **Start in development** — installs dependencies, creates `.env` if needed, starts Docker, runs migrations, and seeds demo data:
 
    ```bash
-   corepack enable
-   corepack pnpm install
+   npm run dev
    ```
 
-4. **Start the development stack**:
+   The first run will pull/build Docker images and download the ONNX model. On subsequent starts, the existing database volume is reused and seeding is skipped.
+
+4. **Start in production**:
 
    ```bash
-   corepack pnpm docker:dev
+   npm run prod
    ```
 
-   On Windows without a global pnpm installation:
-
-   ```powershell
-   .\scripts\dev.ps1
-   ```
-
-5. **Run migrations and seed data** (in another terminal):
-
-   ```bash
-   corepack pnpm db:migrate
-   corepack pnpm db:seed
-   ```
-
-6. **Open the services**:
+5. **Open the services**:
    - Web: `http://localhost:3000`
    - API: `http://localhost:3001`
    - Swagger UI: `http://localhost:3001/api/docs`
    - MinIO console: `http://localhost:9001` (default `minioadmin` / `minioadmin`)
 
-7. **Seed credentials**:
+### Seed credentials
 
-   | Email               | Password       | Role  |
-   | ------------------- | -------------- | ----- |
-   | `admin@example.com` | `Password123!` | Admin |
-   | `alice@example.com` | `Password123!` | User  |
-   | `bob@example.com`   | `Password123!` | User  |
+| Email               | Password       | Role  |
+| ------------------- | -------------- | ----- |
+| `admin@example.com` | `Password123!` | Admin |
+| `alice@example.com` | `Password123!` | User  |
+| `bob@example.com`   | `Password123!` | User  |
 
 ## Overview
 
@@ -204,43 +192,45 @@ Feature folders under `apps/web/src/`:
 ### Prerequisites
 
 - Node.js 22+
-- Docker Desktop or Docker Engine with Compose v2
-- pnpm (via `corepack enable`)
+- Docker Desktop or Docker Engine + Compose v2
 - Git
 
-### 1. Configure environment variables
+### One-command development start
 
-Create a `.env` file at the repository root. The minimal required variables are listed in the [Environment variables](#environment-variables) section.
+`npm run dev` performs all of the following for you:
 
-### 2. Install dependencies
+1. Enables corepack and installs dependencies with pnpm.
+2. Creates a `.env` from `.env.example` if one does not exist.
+3. Starts the Docker development stack (`docker/docker-compose.dev.yml`).
+4. Waits for the API to become healthy.
+5. Runs `prisma migrate deploy`.
+6. Runs `prisma/seed.ts` (skipped automatically if the database already contains data).
+7. Streams container logs in the terminal.
+
+```bash
+npm run dev
+```
+
+### Manual development steps
+
+If you prefer to run the steps manually:
 
 ```bash
 corepack enable
 corepack pnpm install
-```
 
-### 3. Start the development stack
+# Create .env if missing
+cp .env.example .env
 
-```bash
+# Start the stack and keep logs attached
 corepack pnpm docker:dev
-```
 
-On Windows without a global pnpm installation:
-
-```powershell
-.\scripts\dev.ps1
-```
-
-### 4. Run migrations and seed data
-
-In another terminal:
-
-```bash
+# In another terminal:
 corepack pnpm db:migrate
 corepack pnpm db:seed
 ```
 
-### 5. Open the services
+### Services
 
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001`
@@ -261,23 +251,20 @@ corepack pnpm db:seed
 
 The app can be run in both development and production modes. To run it in production mode:
 
-1. Generate a strong `JWT_SECRET` and fill out all required environment variables.
-2. Set `NODE_ENV=production`.
-3. Review `docker/docker-compose.prod.yml` and update external hostnames/ports if needed.
-4. Start the production stack:
-
 ```bash
-corepack pnpm docker:prod
+npm run prod
 ```
 
-The production web container serves the built React SPA from Nginx and proxies `/api/*` requests to the API container. The API container runs the compiled NestJS application.
+`npm run prod` will install dependencies, create `.env` if needed, build the production Docker images, start the stack, run migrations, and seed demo data if the database is empty.
+
+For a real deployment, review `docker/docker-compose.prod.yml`, generate a strong `JWT_SECRET`, and update the `MINIO_*` values to point to your S3-compatible provider if you are not using the bundled MinIO container.
 
 ### Migrating production data
 
 Run migrations against the running `api` container:
 
 ```bash
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @product-reviews/api exec prisma migrate deploy
+docker compose -f docker/docker-compose.prod.yml --env-file .env exec api pnpm --filter @product-reviews/api exec prisma migrate deploy
 ```
 
 ### Replacing MinIO with S3

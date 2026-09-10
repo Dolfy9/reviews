@@ -1,12 +1,29 @@
 import { Controller, Get, Query } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiExtraModels,
+  getSchemaPath,
+} from "@nestjs/swagger";
 import { createZodDto } from "nestjs-zod";
 import { searchQuerySchema } from "@product-reviews/shared";
 import { SearchService } from "./search.service";
+import {
+  SearchProductsResponseDto,
+  SearchReviewsResponseDto,
+  SearchAllResponseDto,
+} from "../../common/dto";
 
 class SearchQueryDto extends createZodDto(searchQuerySchema) {}
 
 @ApiTags("search")
+@ApiExtraModels(
+  SearchProductsResponseDto,
+  SearchReviewsResponseDto,
+  SearchAllResponseDto,
+)
 @Controller("search")
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
@@ -50,6 +67,13 @@ export class SearchController {
     status: 200,
     description:
       "Search results (products, reviews, or both depending on target).",
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(SearchProductsResponseDto) },
+        { $ref: getSchemaPath(SearchReviewsResponseDto) },
+        { $ref: getSchemaPath(SearchAllResponseDto) },
+      ],
+    },
   })
   @ApiResponse({
     status: 400,

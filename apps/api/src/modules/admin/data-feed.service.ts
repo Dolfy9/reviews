@@ -692,11 +692,15 @@ export class DataFeedService {
       this.prisma.user.count(),
       this.prisma.review.count({ where: { status: "PENDING" } }),
     ]);
-    const byCategory = await this.prisma.product.groupBy({
+    const rawByCategory = await this.prisma.product.groupBy({
       by: ["category"],
       _count: true,
       orderBy: { _count: { category: "desc" } },
     });
+    const byCategory = rawByCategory.map((row) => ({
+      category: row.category,
+      _count: row._count,
+    }));
     return { products, reviews, users, pendingReviews, byCategory };
   }
 

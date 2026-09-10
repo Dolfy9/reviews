@@ -23,6 +23,11 @@ import { CreateProductDto, UpdateProductDto, ProductListQueryDto } from "./dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
+import {
+  ProductListResponseDto,
+  ProductResponseDto,
+  MessageResponseDto,
+} from "../../common/dto";
 
 @ApiTags("products")
 @Controller("products")
@@ -81,14 +86,23 @@ export class ProductsController {
     type: String,
     description: "Search term for name and description",
   })
-  @ApiResponse({ status: 200, description: "Paginated list of products." })
+  @ApiResponse({
+    status: 200,
+    description: "Paginated list of products.",
+    type: ProductListResponseDto,
+  })
   findAll(@Query() query: ProductListQueryDto) {
     return this.productsService.findAll(query);
   }
 
   @Get("categories")
   @ApiOperation({ summary: "Get all distinct product categories" })
-  @ApiResponse({ status: 200, description: "List of categories." })
+  @ApiResponse({
+    status: 200,
+    description: "List of categories.",
+    type: String,
+    isArray: true,
+  })
   getCategories() {
     return this.productsService.getCategories();
   }
@@ -103,7 +117,12 @@ export class ProductsController {
     type: String,
     description: "Parent category",
   })
-  @ApiResponse({ status: 200, description: "List of subcategories." })
+  @ApiResponse({
+    status: 200,
+    description: "List of subcategories.",
+    type: String,
+    isArray: true,
+  })
   getSubcategories(@Query("category") category: string) {
     return this.productsService.getSubcategories(category);
   }
@@ -117,7 +136,12 @@ export class ProductsController {
     type: Number,
     description: "Max results (default 6)",
   })
-  @ApiResponse({ status: 200, description: "List of similar products." })
+  @ApiResponse({
+    status: 200,
+    description: "List of similar products.",
+    type: ProductResponseDto,
+    isArray: true,
+  })
   findSimilar(@Param("id") id: string, @Query("limit") limit?: string) {
     return this.productsService.findSimilar(
       id,
@@ -128,7 +152,11 @@ export class ProductsController {
   @Get(":id")
   @ApiOperation({ summary: "Get a single product by ID" })
   @ApiParam({ name: "id", type: String, description: "Product ID" })
-  @ApiResponse({ status: 200, description: "Product details." })
+  @ApiResponse({
+    status: 200,
+    description: "Product details.",
+    type: ProductResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Product not found." })
   findById(@Param("id") id: string) {
     return this.productsService.findById(id);
@@ -139,7 +167,11 @@ export class ProductsController {
   @Roles(Role.ADMIN)
   @ApiCookieAuth()
   @ApiOperation({ summary: "Create a new product (admin only)" })
-  @ApiResponse({ status: 201, description: "Product created." })
+  @ApiResponse({
+    status: 201,
+    description: "Product created.",
+    type: ProductResponseDto,
+  })
   @ApiResponse({ status: 401, description: "Not authenticated." })
   @ApiResponse({
     status: 403,
@@ -155,7 +187,11 @@ export class ProductsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: "Update a product (admin only)" })
   @ApiParam({ name: "id", type: String, description: "Product ID" })
-  @ApiResponse({ status: 200, description: "Product updated." })
+  @ApiResponse({
+    status: 200,
+    description: "Product updated.",
+    type: ProductResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Product not found." })
   @ApiResponse({
     status: 403,
@@ -171,13 +207,18 @@ export class ProductsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: "Delete a product (admin only)" })
   @ApiParam({ name: "id", type: String, description: "Product ID" })
-  @ApiResponse({ status: 200, description: "Product deleted." })
+  @ApiResponse({
+    status: 200,
+    description: "Product deleted.",
+    type: MessageResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Product not found." })
   @ApiResponse({
     status: 403,
     description: "Not authorized (admin role required).",
   })
-  remove(@Param("id") id: string) {
-    return this.productsService.delete(id);
+  async remove(@Param("id") id: string) {
+    await this.productsService.delete(id);
+    return { message: "Product deleted" };
   }
 }

@@ -19,6 +19,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { JwtUser } from "../../common/types";
 import { RegisterDto, LoginDto } from "./dto";
+import { UserResponseDto, MessageResponseDto } from "../../common/dto";
 
 @ApiTags("auth")
 @Controller("auth")
@@ -30,6 +31,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: "User registered, auth cookies set.",
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -47,6 +49,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: "Login successful, auth cookies set.",
+    type: UserResponseDto,
   })
   @ApiResponse({ status: 401, description: "Invalid credentials." })
   async login(
@@ -60,14 +63,23 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiCookieAuth()
   @ApiOperation({ summary: "Log out and clear auth cookies" })
-  @ApiResponse({ status: 200, description: "Logout successful." })
+  @ApiResponse({
+    status: 200,
+    description: "Logout successful.",
+    type: MessageResponseDto,
+  })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.authService.logout(req.cookies?.refresh_token, res);
+    await this.authService.logout(req.cookies?.refresh_token, res);
+    return { message: "Logout successful" };
   }
 
   @Post("refresh")
   @ApiOperation({ summary: "Refresh access token using refresh token cookie" })
-  @ApiResponse({ status: 200, description: "New auth cookies set." })
+  @ApiResponse({
+    status: 200,
+    description: "New auth cookies set.",
+    type: UserResponseDto,
+  })
   @ApiResponse({
     status: 401,
     description: "Invalid or expired refresh token.",
@@ -83,7 +95,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiCookieAuth()
   @ApiOperation({ summary: "Get current authenticated user profile" })
-  @ApiResponse({ status: 200, description: "Current user profile." })
+  @ApiResponse({
+    status: 200,
+    description: "Current user profile.",
+    type: UserResponseDto,
+  })
   @ApiResponse({ status: 401, description: "Not authenticated." })
   me(@CurrentUser() user: JwtUser) {
     return this.authService.me(user.userId);

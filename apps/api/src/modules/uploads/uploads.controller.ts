@@ -9,6 +9,7 @@ import { createZodDto } from "nestjs-zod";
 import { presignedUrlRequestSchema } from "@product-reviews/shared";
 import { UploadsService } from "./uploads.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { PresignedUrlResponseDto } from "../../common/dto";
 
 class PresignedUrlRequestDto extends createZodDto(presignedUrlRequestSchema) {}
 
@@ -27,6 +28,7 @@ export class UploadsController {
   @ApiResponse({
     status: 200,
     description: "Returns uploadUrl, publicUrl, and objectName.",
+    type: PresignedUrlResponseDto,
   })
   @ApiResponse({ status: 400, description: "Filename is required." })
   async getPresignedUrl(@Body() dto: PresignedUrlRequestDto) {

@@ -24,6 +24,12 @@ import {
   CreateReviewVoteDto,
   ReviewListQueryDto,
 } from "./dto";
+import {
+  ReviewListResponseDto,
+  ReviewResponseDto,
+  MineReviewResponseDto,
+  MessageResponseDto,
+} from "../../common/dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -51,7 +57,8 @@ export class ReviewsController {
   })
   @ApiResponse({
     status: 200,
-    description: "Paginated list of approved reviews.",
+    description: "Paginated list of reviews.",
+    type: ReviewListResponseDto,
   })
   @UseGuards(OptionalJwtAuthGuard)
   @ApiCookieAuth()
@@ -70,8 +77,10 @@ export class ReviewsController {
   @ApiParam({ name: "productId", type: String, description: "Product ID" })
   @ApiResponse({
     status: 200,
-    description: "Returns the user's review if it exists, null otherwise.",
+    description: "User's existing review or null.",
+    type: MineReviewResponseDto,
   })
+  @ApiResponse({ status: 401, description: "Not authenticated." })
   async checkMine(
     @Param("productId") productId: string,
     @CurrentUser() user: JwtUser,
@@ -88,7 +97,11 @@ export class ReviewsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: "Create a review for a product" })
   @ApiParam({ name: "productId", type: String, description: "Product ID" })
-  @ApiResponse({ status: 201, description: "Review created." })
+  @ApiResponse({
+    status: 201,
+    description: "Review created.",
+    type: ReviewResponseDto,
+  })
   @ApiResponse({
     status: 400,
     description: "Already reviewed this product or invalid input.",
@@ -107,10 +120,15 @@ export class ReviewsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: "Update a review (owner or admin)" })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
-  @ApiResponse({ status: 200, description: "Review updated." })
-  @ApiResponse({ status: 403, description: "Can only edit your own review." })
+  @ApiResponse({
+    status: 200,
+    description: "Review updated.",
+    type: ReviewResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Review not found." })
-  update(
+  @ApiResponse({ status: 403, description: "Forbidden." })
+  @ApiResponse({ status: 401, description: "Not authenticated." })
+  async update(
     @Param("id") reviewId: string,
     @CurrentUser() user: JwtUser,
     @Body() dto: UpdateReviewDto,
@@ -128,15 +146,21 @@ export class ReviewsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: "Delete a review (owner or admin)" })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
-  @ApiResponse({ status: 200, description: "Review deleted." })
-  @ApiResponse({ status: 403, description: "Can only delete your own review." })
+  @ApiResponse({
+    status: 200,
+    description: "Review deleted.",
+    type: MessageResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Review not found." })
-  remove(@Param("id") reviewId: string, @CurrentUser() user: JwtUser) {
-    return this.reviewsService.delete(
+  @ApiResponse({ status: 403, description: "Forbidden." })
+  @ApiResponse({ status: 401, description: "Not authenticated." })
+  async remove(@Param("id") reviewId: string, @CurrentUser() user: JwtUser) {
+    await this.reviewsService.delete(
       reviewId,
       user.userId,
       user.role === "ADMIN",
     );
+    return { message: "Review deleted" };
   }
 
   @Post(":id/vote")
@@ -147,11 +171,15 @@ export class ReviewsController {
   })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
   @ApiResponse({
-    status: 200,
-    description: "Vote recorded, updated review returned.",
+    status: 201,
+    description: "Vote recorded.",
+    type: ReviewResponseDto,
   })
+  @ApiResponse({ status: 400, description: "Invalid vote type." })
+  @ApiResponse({ status: 401, description: "Not authenticated." })
   @ApiResponse({ status: 404, description: "Review not found." })
-  vote(
+  @ApiResponse({ status: 403, description: "Cannot vote on own review." })
+  async vote(
     @Param("id") reviewId: string,
     @CurrentUser() user: JwtUser,
     @Body() dto: CreateReviewVoteDto,

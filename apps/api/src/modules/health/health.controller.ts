@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { HealthCheck, HealthCheckService } from "@nestjs/terminus";
 import { PrismaHealthIndicator } from "@nestjs/terminus";
 import { PrismaService } from "../../config/prisma.service";
+import { HealthCheckResponseDto } from "../../common/dto";
 
 @ApiTags("health")
 @Controller("health")
@@ -19,6 +20,7 @@ export class HealthController {
   @ApiResponse({
     status: 200,
     description: "Service health status including database connectivity.",
+    type: HealthCheckResponseDto,
   })
   check() {
     return this.health.check([

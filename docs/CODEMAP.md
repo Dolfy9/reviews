@@ -2,7 +2,7 @@
 
 This file is a semantic mirror of the source tree. Each entry describes what a file or directory is responsible for. Run `pnpm codemap` to regenerate the skeleton after structural changes.
 
-> Last updated: 2026-09-10T08:36:10.443Z
+> Last updated: 2026-09-10T09:14:28.351Z
 
 - `AGENTS.md`
 - **`apps/`**
@@ -20,6 +20,7 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
       - `app.module.ts`
       - **`apps/api/src/common/`**
         - `date.util.ts`
+        - `dto.ts`
         - `duration.util.spec.ts`
         - `duration.util.ts`
         - `hash.util.spec.ts`

@@ -91,7 +91,7 @@ All endpoints are prefixed with `/api` (e.g. `http://localhost:3001/api/products
 | `GET`    | `/reviews/products/:productId/mine`    | Cookie | Returns the current user's review for the product, or `null` if none.                                                                                              |
 | `POST`   | `/reviews/products/:productId/reviews` | Cookie | Create a review. Body: `{ rating (1-5), title, content, images?, pros?, cons? }`. `images`, `pros`, and `cons` are string arrays. One review per user per product. |
 | `PATCH`  | `/reviews/:id`                         | Cookie | Update a review (owner or admin). Body: partial `CreateReviewInput`.                                                                                               |
-| `DELETE` | `/reviews/:id`                         | Cookie | Delete a review (owner or admin).                                                                                                                                  |
+| `DELETE` | `/reviews/:id`                         | Cookie | Delete a review (owner or admin). Returns `{ message }`.                                                                                                           |
 | `POST`   | `/reviews/:id/vote`                    | Cookie | Vote on a review. Body: `{ type: "HELPFUL"                                                                                                                         | "NOT_HELPFUL" }`. Toggles if same vote type. |
 
 ### Search (`/api/search`)
@@ -126,7 +126,7 @@ All admin endpoints require `ADMIN` role.
 | -------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `GET`    | `/admin/reviews`            | List reviews for moderation. Query: `status` (`PENDING`/`APPROVED`/`REJECTED`), `page`, `limit`. Defaults to non-approved. |
 | `PATCH`  | `/admin/reviews/:id/status` | Update review status. Body: `{ status: "APPROVED"                                                                          | "REJECTED" }`. |
-| `DELETE` | `/admin/reviews/:id`        | Delete any review.                                                                                                         |
+| `DELETE` | `/admin/reviews/:id`        | Delete any review. Returns `{ message }`.                                                                                  |
 | `GET`    | `/admin/users`              | List all users. Query: `page`, `limit`.                                                                                    |
 | `PATCH`  | `/admin/users/:id/role`     | Update user role. Body: `{ role: "USER"                                                                                    | "ADMIN" }`.    |
 | `GET`    | `/admin/stats`              | Database statistics overview.                                                                                              |

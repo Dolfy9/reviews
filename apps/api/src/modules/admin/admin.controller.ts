@@ -32,6 +32,15 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import {
+  ReviewListResponseDto,
+  ReviewResponseDto,
+  UserListResponseDto,
+  UserResponseDto,
+  StatsResponseDto,
+  SeedResultDto,
+  MessageResponseDto,
+} from "../../common/dto";
 
 @ApiTags("admin")
 @ApiCookieAuth()
@@ -69,6 +78,7 @@ export class AdminController {
   @ApiResponse({
     status: 200,
     description: "Paginated list of reviews for moderation.",
+    type: ReviewListResponseDto,
   })
   @ApiResponse({ status: 403, description: "Admin role required." })
   getReviewsForModeration(
@@ -82,7 +92,11 @@ export class AdminController {
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Update a review's moderation status (admin only)" })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
-  @ApiResponse({ status: 200, description: "Review status updated." })
+  @ApiResponse({
+    status: 200,
+    description: "Review status updated.",
+    type: ReviewResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Review not found." })
   @ApiResponse({ status: 403, description: "Admin role required." })
   updateReviewStatus(
@@ -96,11 +110,16 @@ export class AdminController {
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Delete a review (admin only)" })
   @ApiParam({ name: "id", type: String, description: "Review ID" })
-  @ApiResponse({ status: 200, description: "Review deleted." })
+  @ApiResponse({
+    status: 200,
+    description: "Review deleted.",
+    type: MessageResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Review not found." })
   @ApiResponse({ status: 403, description: "Admin role required." })
-  deleteReview(@Param("id") reviewId: string) {
-    return this.reviewsService.delete(reviewId, "", true);
+  async deleteReview(@Param("id") reviewId: string) {
+    await this.reviewsService.delete(reviewId, "", true);
+    return { message: "Review deleted" };
   }
 
   @Get("users")
@@ -118,7 +137,11 @@ export class AdminController {
     type: Number,
     description: "Items per page (default 20, max 50)",
   })
-  @ApiResponse({ status: 200, description: "Paginated list of users." })
+  @ApiResponse({
+    status: 200,
+    description: "Paginated list of users.",
+    type: UserListResponseDto,
+  })
   @ApiResponse({ status: 403, description: "Admin role required." })
   getUsers(@Query() query: AdminReviewListQueryDto) {
     return this.adminService.findUsers(query);
@@ -128,7 +151,11 @@ export class AdminController {
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Update a user's role (admin only)" })
   @ApiParam({ name: "id", type: String, description: "User ID" })
-  @ApiResponse({ status: 200, description: "User role updated." })
+  @ApiResponse({
+    status: 200,
+    description: "User role updated.",
+    type: UserResponseDto,
+  })
   @ApiResponse({ status: 404, description: "User not found." })
   @ApiResponse({ status: 403, description: "Admin role required." })
   updateRole(@Param("id") userId: string, @Body() dto: UpdateRoleDto) {
@@ -138,7 +165,11 @@ export class AdminController {
   @Get("stats")
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Get database statistics (admin only)" })
-  @ApiResponse({ status: 200, description: "Database statistics." })
+  @ApiResponse({
+    status: 200,
+    description: "Database statistics.",
+    type: StatsResponseDto,
+  })
   async getStats() {
     return this.dataFeedService.getStats();
   }
@@ -159,7 +190,12 @@ export class AdminController {
     type: Number,
     description: "Products per source (default 100, max 100)",
   })
-  @ApiResponse({ status: 201, description: "Products mined successfully." })
+  @ApiResponse({
+    status: 201,
+    description: "Products mined successfully.",
+    type: SeedResultDto,
+    isArray: true,
+  })
   @ApiResponse({ status: 403, description: "Admin role required." })
   async seedProducts(
     @Query("source") source?: string,

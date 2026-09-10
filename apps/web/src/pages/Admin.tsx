@@ -46,6 +46,7 @@ interface SourceProgress {
   fetched: number;
   inserted: number;
   skipped: number;
+  processed: number;
   total: number;
 }
 
@@ -153,6 +154,7 @@ export default function Admin() {
               fetched: 0,
               inserted: 0,
               skipped: 0,
+              processed: 0,
               total: 0,
             };
             const updated = { ...existing };
@@ -167,6 +169,9 @@ export default function Admin() {
               updated.total = event.data.total as number;
             }
             if (event.step === "product_inserted" && event.data) {
+              updated.processed =
+                (event.data.processed as number | undefined) ??
+                updated.processed;
               updated.inserted = event.data.inserted as number;
               updated.skipped = event.data.skipped as number;
             }
@@ -175,6 +180,7 @@ export default function Admin() {
               updated.fetched = event.data.fetched as number;
               updated.inserted = event.data.inserted as number;
               updated.skipped = event.data.skipped as number;
+              updated.processed = updated.total;
             }
             if (event.step === "source_error") updated.status = "error";
 
@@ -423,7 +429,14 @@ export default function Admin() {
             <div className="space-y-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               {Object.values(sourceProgress).map((sp) => {
                 const pct =
-                  sp.total > 0 ? Math.round((sp.inserted / sp.total) * 100) : 0;
+                  sp.status === "done"
+                    ? 100
+                    : sp.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round((sp.processed / sp.total) * 100),
+                        )
+                      : 0;
                 return (
                   <div key={sp.source}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
@@ -455,7 +468,9 @@ export default function Admin() {
                         )}
                       </div>
                       <span className="text-xs font-medium text-slate-400">
-                        {sp.inserted}/{sp.total} ({pct}%)
+                        {sp.status === "done"
+                          ? `${sp.total}/${sp.total} (100%)`
+                          : `${sp.processed}/${sp.total} (${pct}%)`}
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">

@@ -796,6 +796,7 @@ export class DataFeedService {
 
     let inserted = 0;
     let skipped = 0;
+    let processed = 0;
     let reviewsCreated = 0;
 
     this.emit({
@@ -807,10 +808,32 @@ export class DataFeedService {
     });
 
     for (const p of products) {
+      processed++;
+
+      const reportProgress = () => {
+        if (processed % 5 === 0 || processed === products.length) {
+          this.emit({
+            step: "product_inserted",
+            source: src,
+            message: `[${src}] Processed ${processed}/${products.length} (${inserted} inserted, ${skipped} skipped)`,
+            timestamp: new Date().toISOString(),
+            data: {
+              processed,
+              inserted,
+              skipped,
+              total: products.length,
+              reviewsCreated,
+            },
+          });
+        }
+      };
+
       if (existingNames.has(p.name.toLowerCase())) {
         skipped++;
+        reportProgress();
         continue;
       }
+
       try {
         const product = await this.prisma.product.create({
           data: {
@@ -828,16 +851,6 @@ export class DataFeedService {
         });
         existingNames.add(p.name.toLowerCase());
         inserted++;
-
-        if (inserted % 5 === 0 || inserted === products.length) {
-          this.emit({
-            step: "product_inserted",
-            source: src,
-            message: `[${src}] Inserted ${inserted}/${products.length} (${skipped} skipped)`,
-            timestamp: new Date().toISOString(),
-            data: { inserted, skipped, total: products.length, reviewsCreated },
-          });
-        }
 
         // Generate embedding for semantic search
         const embedding = await this.embeddingService.embedPassage(
@@ -899,9 +912,12 @@ export class DataFeedService {
             data: { averageRating: 0, reviewCount: 0 },
           });
         }
+
+        reportProgress();
       } catch (err) {
         this.logger.warn(`[${src}] Failed to insert "${p.name}": ${err}`);
         skipped++;
+        reportProgress();
       }
     }
 

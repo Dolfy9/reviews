@@ -8,6 +8,7 @@ import { Env } from "./env.schema";
 export class MinioService implements OnModuleInit {
   private readonly logger = new Logger(MinioService.name);
   private readonly client: MinioClient;
+  private readonly publicClient: MinioClient;
   private readonly bucket: string;
   private readonly publicUrl: string;
 
@@ -22,12 +23,32 @@ export class MinioService implements OnModuleInit {
     this.publicUrl = this.config
       .getOrThrow("MINIO_PUBLIC_URL")
       .replace(/\/$/, "");
+
     this.client = new MinioClient({
       endPoint: host,
       port,
       useSSL: this.config.getOrThrow("MINIO_USE_SSL"),
       accessKey: this.config.getOrThrow("MINIO_ACCESS_KEY"),
       secretKey: this.config.getOrThrow("MINIO_SECRET_KEY"),
+    });
+
+    // A separate client configured with the public endpoint is used only to
+    // sign presigned PUT URLs. It does not need to be reachable from the API
+    // container; the browser uses the resulting URL to upload directly to MinIO.
+    const publicEndpoint = new URL(this.publicUrl);
+    const publicPort = publicEndpoint.port
+      ? Number(publicEndpoint.port)
+      : publicEndpoint.protocol === "https:"
+        ? 443
+        : 80;
+    this.publicClient = new MinioClient({
+      endPoint: publicEndpoint.hostname,
+      port: publicPort,
+      useSSL: publicEndpoint.protocol === "https:",
+      accessKey: this.config.getOrThrow("MINIO_ACCESS_KEY"),
+      secretKey: this.config.getOrThrow("MINIO_SECRET_KEY"),
+      region: "us-east-1",
+      pathStyle: true,
     });
   }
 
@@ -41,7 +62,7 @@ export class MinioService implements OnModuleInit {
 
   async getPresignedUploadUrl(extension?: string, expirySeconds = 300) {
     const objectName = `${randomUUID()}${extension ? `.${extension}` : ""}`;
-    const uploadUrl = await this.client.presignedPutObject(
+    const uploadUrl = await this.publicClient.presignedPutObject(
       this.bucket,
       objectName,
       expirySeconds,

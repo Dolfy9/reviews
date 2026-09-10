@@ -70,7 +70,7 @@ All endpoints are prefixed with `/api` (e.g. `http://localhost:3001/api/products
 | `GET`    | `/products/:id` | Public | Get a single product by ID. Returns `ProductDto`.                                          |
 | `POST`   | `/products`     | Admin  | Create a new product. Body: `{ name, description?, price, category, images?, isActive? }`. |
 | `PATCH`  | `/products/:id` | Admin  | Update a product. Body: partial `CreateProductInput`.                                      |
-| `DELETE` | `/products/:id` | Admin  | Delete a product.                                                                          |
+| `DELETE` | `/products/:id` | Admin  | Delete a product. Returns `{ message }`.                                                   |
 
 #### `GET /products` query parameters
 
@@ -141,9 +141,9 @@ All admin endpoints require `ADMIN` role.
 
 ## Search modes
 
-- **`fulltext`**: PostgreSQL `ts_rank_cd` over `to_tsvector('english', name || ' ' || description)`. Uses `plainto_tsquery` for query parsing.
-- **`semantic`**: Cosine distance (`<=>`) between query embedding (384-dim BAAI/bge-small-en-v1.5) and stored embeddings. Requires `SEMANTIC_SEARCH_ENABLED=true`.
-- **`hybrid`**: Reciprocal rank fusion (RRF, k=60) of full-text and semantic results. Fetches top 100 from each, fuses, then paginates.
+- **`fulltext`**: PostgreSQL `ts_rank_cd` over `to_tsvector('english', name || ' ' || description || ' ' || metadata)` with a `word:*` prefix query. `ILIKE` substring matches on the name, description, and metadata are used as a fallback. Results are boosted by exact name match, name prefix match, name substring match, description match, and metadata match.
+- **`semantic`**: Cosine distance (`<=>`) between the query embedding (384-dim `BAAI/bge-small-en-v1.5`) and stored product/review embeddings. Requires `SEMANTIC_SEARCH_ENABLED=true`.
+- **`hybrid`**: Fetches the top 100 fulltext and top 100 semantic results, then fuses them with weighted reciprocal rank fusion. Fulltext has 50× the weight of semantic so keyword/prefix matches rank first, while semantic results fill in related items.
 
 ## DTO schemas
 

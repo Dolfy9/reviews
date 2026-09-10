@@ -12,7 +12,7 @@ Routes:
 | `/products/:id` | `Product`  | Public | Product detail with reviews, review form (if logged in), image lightbox, and review image gallery |
 | `/login`        | `Login`    | Public | Login form with Zod validation                                                                    |
 | `/register`     | `Register` | Public | Registration form with Zod validation                                                             |
-| `/admin`        | `Admin`    | Admin  | Pending review moderation dashboard                                                               |
+| `/admin`        | `Admin`    | Admin  | Review moderation, user management, database stats, and live data-mining dashboard                |
 | `*`             | —          | Public | Fallback 404 page                                                                                 |
 
 ## State
@@ -37,13 +37,17 @@ API modules in `apps/web/src/api/`:
 ## Components
 
 - `Layout.tsx` — nav bar with auth-aware links, dark-mode toggle, and an "API docs" link to Swagger
-- `ProductCard.tsx` — product summary card with link to detail
-- `ReviewCard.tsx` — review display with star rating, clickable image gallery, pros/cons list, and helpful/not-helpful voting (if logged in)
-- `ReviewImageGallery.tsx` — thumbnail grid and full-screen lightbox for a review's images
-- `ProsConsInput.tsx` — tag-style inputs for adding pros and cons to a review
-- `ReviewImageInput.tsx` — image attachment input that fetches a presigned URL and uploads directly to MinIO
+- `AutocompleteSearch.tsx` — debounced search input with live fulltext suggestions and "see all results" action
+- `ProductCard.tsx` — product summary card with image, rating, price, and link to detail
 - `SearchBar.tsx` — controlled search input triggering callback on submit
 - `StarRating.tsx` — read-only or interactive star rating component
+- `ReviewCard.tsx` — review display with star rating, author, pros/cons, image gallery, helpful/not-helpful voting, and edit/delete actions for the owner/admin
+- `ReviewImageGallery.tsx` — thumbnail grid and full-screen lightbox for a review's images
+- `ReviewImageInput.tsx` — image attachment input that fetches a presigned URL and uploads directly to MinIO
+- `ProsConsInput.tsx` — tag-style inputs for adding pros and cons to a review
+- `Skeletons.tsx` — loading skeletons for product grids, cards, and lists
+- `EmptyState.tsx` — empty/error state with optional action
+- `Toast.tsx` — global toast notifications via `ToastProvider`
 
 ## Error handling
 
@@ -52,3 +56,4 @@ API modules in `apps/web/src/api/`:
 - Product review form shows success and error states for mutation, and an "already reviewed" banner instead of the form when `checkMine` returns a review
 - Admin page shows error states for query and mutations
 - ReviewCard vote failures show an inline error message and a spinner on the active button
+- Search/autocomplete query failures fall back to an empty suggestions list

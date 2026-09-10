@@ -41,7 +41,9 @@ Global middleware and guards (configured in `main.ts` and `app.module.ts`):
 
 ## Search
 
-PostgreSQL provides full-text search via `to_tsvector` and GIN indexes. Optional semantic search uses `pgvector` with 384-dimensional embeddings from the `BAAI/bge-small-en-v1.5` model. Hybrid mode merges full-text rank and vector cosine distance using reciprocal rank fusion.
+PostgreSQL provides full-text search via `to_tsvector` and `to_tsquery` with `word:*` prefix matching. `ILIKE` substring matches on the name, description, title, content, author, and metadata are used as a fallback for short or partial terms. Exact and prefix name/title matches are boosted to rank the most relevant results first.
+
+Optional semantic search uses `pgvector` with 384-dimensional embeddings from the `BAAI/bge-small-en-v1.5` model. Hybrid mode fuses full-text and semantic results with weighted reciprocal rank fusion (fulltext weight 50×, semantic weight 1×), so keyword/prefix matches are strongly preferred while still surfacing semantically related items.
 
 Semantic search can be disabled with `SEMANTIC_SEARCH_ENABLED=false` for low-spec or offline machines.
 

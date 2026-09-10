@@ -2,7 +2,7 @@
 
 This file is a semantic mirror of the source tree. Each entry describes what a file or directory is responsible for. Run `pnpm codemap` to regenerate the skeleton after structural changes.
 
-> Last updated: 2026-09-10T09:14:28.351Z
+> Last updated: 2026-09-10T09:55:19.008Z
 
 - `AGENTS.md`
 - **`apps/`**
@@ -105,6 +105,7 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
     - `index.html`
     - `nginx.conf`
     - `package.json`
+    - `playwright.config.ts`
     - `postcss.config.js`
     - **`apps/web/public/`**
     - **`apps/web/src/`**
@@ -149,9 +150,14 @@ This file is a semantic mirror of the source tree. Each entry describes what a f
         - `authStore.ts`
       - `vite-env.d.ts`
     - `tailwind.config.js`
+    - **`apps/web/test-results/`**
+    - **`apps/web/tests/`**
+      - **`apps/web/tests/e2e/`**
+        - `smoke.e2e.ts`
     - **`apps/web/tsconfig.app.json/`**
     - `tsconfig.json`
     - **`apps/web/tsconfig.node.json/`**
+    - `tsconfig.tsbuildinfo`
     - `vite.config.ts`
 - **`docker/`**
   - `docker-compose.dev.yml`
